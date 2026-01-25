@@ -1,0 +1,132 @@
+{% extends "base.html" %}
+
+{% block title %}Submit {{ submission_type|replace('_', ' ')|title }} - {{ module.name }}{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto px-4 py-8">
+    <div class="mb-6">
+        <a href="/dashboard" class="text-blue-600 hover:text-blue-800 text-sm mb-2 inline-block">&larr; Back to Dashboard</a>
+        <h1 class="text-2xl font-bold text-slate-800">
+            Submit {{ submission_type|replace('_', ' ')|title }}
+        </h1>
+        <p class="text-slate-600 mt-1">{{ module.name }}</p>
+    </div>
+
+    {% if existing %}
+    <div class="bg-amber-50 border border-amber-200 text-amber-800 px-4 py-3 rounded-lg mb-6">
+        <p class="font-medium">You have already submitted this assignment.</p>
+        <p class="text-sm mt-1">Submitting again will update your previous submission.</p>
+    </div>
+    {% endif %}
+
+    <form action="/submit/{{ submission_type }}" method="post" class="bg-white rounded-xl shadow-md p-6">
+        <!-- GitHub Link -->
+        <div class="mb-6">
+            <label for="github_link" class="block text-sm font-medium text-slate-700 mb-2">
+                GitHub Repository Link <span class="text-red-500">*</span>
+            </label>
+            <input type="url" id="github_link" name="github_link" required
+                   value="{{ existing.github_link if existing else '' }}"
+                   placeholder="https://github.com/username/repository"
+                   pattern="https://github\.com/[\w-]+/[\w.-]+/?"
+                   class="w-full px-4 py-2.5 rounded-lg border border-slate-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all">
+            <p class="text-xs text-slate-500 mt-1">
+                Must be a valid GitHub repository URL (e.g., https://github.com/username/repo)
+            </p>
+        </div>
+
+        <!-- Comments -->
+        <div class="mb-6">
+            <label for="comments" class="block text-sm font-medium text-slate-700 mb-2">
+                Review Comments <span class="text-red-500">*</span>
+            </label>
+            <textarea id="comments" name="comments" required rows="6"
+                      placeholder="Please share your feedback:
+
+- What worked well?
+- What was confusing?
+- Any setup issues?
+- Suggestions for improvement?"
+                      class="w-full px-4 py-2.5 rounded-lg border border-slate-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all resize-y">{{ existing.comments if existing else '' }}</textarea>
+        </div>
+
+        <!-- Ratings Section -->
+        <div class="bg-slate-50 rounded-lg p-4 mb-6">
+            <h3 class="text-sm font-medium text-slate-700 mb-4">Feedback Ratings (Optional but helpful)</h3>
+
+            <div class="grid md:grid-cols-2 gap-6">
+                <!-- Clarity Rating -->
+                <div>
+                    <label class="block text-sm text-slate-600 mb-2">
+                        Clarity of Instructions
+                    </label>
+                    <div class="flex gap-2">
+                        {% for i in range(1, 6) %}
+                        <label class="cursor-pointer">
+                            <input type="radio" name="clarity_rating" value="{{ i }}" class="sr-only peer"
+                                   {% if existing and existing.clarity_rating == i %}checked{% endif %}>
+                            <span class="block w-10 h-10 rounded-lg border-2 border-slate-200 text-center leading-9 text-slate-400 peer-checked:border-blue-500 peer-checked:bg-blue-50 peer-checked:text-blue-600 hover:border-blue-300 transition-all">
+                                {{ i }}
+                            </span>
+                        </label>
+                        {% endfor %}
+                    </div>
+                    <p class="text-xs text-slate-400 mt-1">1 = Unclear, 5 = Very Clear</p>
+                </div>
+
+                <!-- Difficulty Rating -->
+                <div>
+                    <label class="block text-sm text-slate-600 mb-2">
+                        Difficulty Level
+                    </label>
+                    <div class="flex gap-2">
+                        {% for i in range(1, 6) %}
+                        <label class="cursor-pointer">
+                            <input type="radio" name="difficulty_rating" value="{{ i }}" class="sr-only peer"
+                                   {% if existing and existing.difficulty_rating == i %}checked{% endif %}>
+                            <span class="block w-10 h-10 rounded-lg border-2 border-slate-200 text-center leading-9 text-slate-400 peer-checked:border-blue-500 peer-checked:bg-blue-50 peer-checked:text-blue-600 hover:border-blue-300 transition-all">
+                                {{ i }}
+                            </span>
+                        </label>
+                        {% endfor %}
+                    </div>
+                    <p class="text-xs text-slate-400 mt-1">1 = Too Easy, 5 = Too Hard</p>
+                </div>
+            </div>
+
+            <!-- Time Spent -->
+            <div class="mt-4">
+                <label for="time_spent_minutes" class="block text-sm text-slate-600 mb-2">
+                    Time Spent (minutes)
+                </label>
+                <input type="number" id="time_spent_minutes" name="time_spent_minutes" min="1" max="1000"
+                       value="{{ existing.time_spent_minutes if existing else '' }}"
+                       placeholder="e.g., 120"
+                       class="w-32 px-4 py-2 rounded-lg border border-slate-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all">
+            </div>
+        </div>
+
+        <!-- Grading Note -->
+        {% if module.grading_enabled %}
+        <div class="bg-blue-50 border border-blue-100 text-blue-800 px-4 py-3 rounded-lg mb-6 text-sm">
+            <p class="flex items-center gap-2">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+                Your submission will be automatically graded after submission.
+            </p>
+        </div>
+        {% endif %}
+
+        <!-- Submit Button -->
+        <div class="flex gap-4">
+            <a href="/dashboard" class="flex-1 text-center bg-slate-100 text-slate-700 px-6 py-3 rounded-lg hover:bg-slate-200 transition-colors">
+                Cancel
+            </a>
+            <button type="submit" class="flex-1 gradient-button text-white px-6 py-3 rounded-lg hover:shadow-lg transition-all">
+                {% if existing %}Update Submission{% else %}Submit{% endif %}
+            </button>
+        </div>
+    </form>
+</div>
+{% endblock %}

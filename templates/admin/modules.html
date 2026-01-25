@@ -1,0 +1,91 @@
+{% extends "admin/base.html" %}
+
+{% block title %}Manage Modules - Admin{% endblock %}
+
+{% block admin_content %}
+<div class="flex justify-between items-center mb-6">
+    <h1 class="text-2xl font-bold text-slate-800">Manage Modules</h1>
+    <a href="/admin/modules/new" class="inline-flex items-center gap-2 gradient-button text-white px-4 py-2 rounded-lg">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+        </svg>
+        New Module
+    </a>
+</div>
+
+{% if request.query_params.get('updated') %}
+<div class="bg-emerald-50 border border-emerald-200 text-emerald-800 px-4 py-3 rounded-lg mb-6">
+    PDF updated! Notified {{ request.query_params.get('notified', 0) }} user(s).
+</div>
+{% endif %}
+
+{% if request.query_params.get('no_update') %}
+<div class="bg-blue-50 border border-blue-200 text-blue-800 px-4 py-3 rounded-lg mb-6">
+    No updates found for this module's PDF.
+</div>
+{% endif %}
+
+<div class="bg-white rounded-xl shadow-md overflow-hidden">
+    <table class="w-full">
+        <thead class="bg-slate-50">
+            <tr>
+                <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase">Module</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase">Visibility</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase">Reviewers</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase">Submissions</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase">Actions</th>
+            </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-100">
+            {% for module in modules %}
+            <tr class="hover:bg-slate-50">
+                <td class="px-6 py-4">
+                    <div class="flex items-center gap-3">
+                        <span class="text-xs font-semibold text-blue-600 bg-blue-50 px-2 py-1 rounded">
+                            Week {{ module.week_number }}
+                        </span>
+                        <span class="text-sm font-medium text-slate-900">{{ module.name }}</span>
+                    </div>
+                </td>
+                <td class="px-6 py-4">
+                    <span class="text-xs font-medium px-2.5 py-1 rounded-full
+                        {% if module.visibility.value == 'active' %}bg-emerald-100 text-emerald-700
+                        {% elif module.visibility.value == 'pilot_review' %}bg-amber-100 text-amber-700
+                        {% elif module.visibility.value == 'draft' %}bg-slate-100 text-slate-600
+                        {% else %}bg-red-100 text-red-700{% endif %}">
+                        {{ module.visibility.value|replace('_', ' ')|title }}
+                    </span>
+                </td>
+                <td class="px-6 py-4 text-sm text-slate-600">
+                    {{ module_stats[module.id].reviewer_count }}/{{ module.max_reviewers }}
+                </td>
+                <td class="px-6 py-4 text-sm text-slate-600">
+                    {{ module_stats[module.id].submission_count }}
+                </td>
+                <td class="px-6 py-4">
+                    <div class="flex items-center gap-2">
+                        <a href="/admin/modules/{{ module.id }}/edit" class="text-blue-600 hover:text-blue-800 text-sm">
+                            Edit
+                        </a>
+                        <form action="/admin/modules/{{ module.id }}/check-update" method="post" class="inline">
+                            <button type="submit" class="text-slate-500 hover:text-blue-600 text-sm">
+                                Check PDF
+                            </button>
+                        </form>
+                        <form action="/admin/modules/{{ module.id }}/grade-all" method="post" class="inline">
+                            <button type="submit" class="text-emerald-600 hover:text-emerald-800 text-sm">
+                                Grade All
+                            </button>
+                        </form>
+                    </div>
+                </td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="5" class="px-6 py-8 text-center text-slate-500">No modules yet</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

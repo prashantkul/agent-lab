@@ -1,0 +1,208 @@
+{% extends "admin/base.html" %}
+
+{% block title %}{% if is_new %}New Module{% else %}Edit {{ module.name }}{% endif %} - Admin{% endblock %}
+
+{% block admin_content %}
+<div class="mb-6">
+    <a href="/admin/modules" class="text-blue-600 hover:text-blue-800 text-sm mb-2 inline-block">&larr; Back to Modules</a>
+    <h1 class="text-2xl font-bold text-slate-800">
+        {% if is_new %}New Module{% else %}Edit Module{% endif %}
+    </h1>
+</div>
+
+<form action="{% if is_new %}/admin/modules{% else %}/admin/modules/{{ module.id }}{% endif %}" method="post"
+      class="bg-white rounded-xl shadow-md divide-y divide-slate-100">
+
+    <!-- Basic Info -->
+    <div class="p-6">
+        <h2 class="text-lg font-semibold text-slate-800 mb-4">Basic Information</h2>
+        <div class="grid md:grid-cols-2 gap-4">
+            <div>
+                <label for="name" class="block text-sm font-medium text-slate-700 mb-1">Name</label>
+                <input type="text" id="name" name="name" required
+                       value="{{ module.name if module else '' }}"
+                       placeholder="Week 1: Research & Report Crew"
+                       class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none">
+            </div>
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label for="week_number" class="block text-sm font-medium text-slate-700 mb-1">Week Number</label>
+                    <input type="number" id="week_number" name="week_number" required min="1"
+                           value="{{ module.week_number if module else 1 }}"
+                           class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none">
+                </div>
+                <div>
+                    <label for="visibility" class="block text-sm font-medium text-slate-700 mb-1">Visibility</label>
+                    <select id="visibility" name="visibility"
+                            class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none">
+                        <option value="draft" {% if module and module.visibility.value == 'draft' %}selected{% endif %}>Draft</option>
+                        <option value="pilot_review" {% if module and module.visibility.value == 'pilot_review' %}selected{% endif %}>Pilot Review</option>
+                        <option value="active" {% if module and module.visibility.value == 'active' %}selected{% endif %}>Active</option>
+                        <option value="archived" {% if module and module.visibility.value == 'archived' %}selected{% endif %}>Archived</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <div class="mt-4">
+            <label for="short_description" class="block text-sm font-medium text-slate-700 mb-1">Short Description</label>
+            <input type="text" id="short_description" name="short_description"
+                   value="{{ module.short_description if module else '' }}"
+                   placeholder="One-liner description for module cards"
+                   class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none">
+        </div>
+
+        <div class="mt-4">
+            <label for="detailed_description" class="block text-sm font-medium text-slate-700 mb-1">Detailed Description</label>
+            <textarea id="detailed_description" name="detailed_description" rows="4"
+                      placeholder="Full markdown description..."
+                      class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none">{{ module.detailed_description if module else '' }}</textarea>
+        </div>
+    </div>
+
+    <!-- Learning Objectives & Prerequisites -->
+    <div class="p-6">
+        <h2 class="text-lg font-semibold text-slate-800 mb-4">Learning Content</h2>
+        <div class="grid md:grid-cols-2 gap-4">
+            <div>
+                <label for="learning_objectives" class="block text-sm font-medium text-slate-700 mb-1">
+                    Learning Objectives (one per line)
+                </label>
+                <textarea id="learning_objectives" name="learning_objectives" rows="4"
+                          placeholder="Understand multi-agent coordination patterns&#10;Implement ReAct reasoning"
+                          class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none">{% if module and module.learning_objectives %}{{ module.learning_objectives|join('\n') }}{% endif %}</textarea>
+            </div>
+            <div>
+                <label for="prerequisites" class="block text-sm font-medium text-slate-700 mb-1">
+                    Prerequisites (one per line)
+                </label>
+                <textarea id="prerequisites" name="prerequisites" rows="4"
+                          placeholder="Python 3.10+ experience&#10;Basic understanding of LLMs"
+                          class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none">{% if module and module.prerequisites %}{{ module.prerequisites|join('\n') }}{% endif %}</textarea>
+            </div>
+        </div>
+
+        <div class="mt-4">
+            <label for="expected_outcomes" class="block text-sm font-medium text-slate-700 mb-1">Expected Outcomes</label>
+            <textarea id="expected_outcomes" name="expected_outcomes" rows="2"
+                      placeholder="What students will build/learn..."
+                      class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none">{{ module.expected_outcomes if module else '' }}</textarea>
+        </div>
+
+        <div class="mt-4">
+            <label for="estimated_time_minutes" class="block text-sm font-medium text-slate-700 mb-1">
+                Estimated Time (minutes)
+            </label>
+            <input type="number" id="estimated_time_minutes" name="estimated_time_minutes" min="0"
+                   value="{{ module.estimated_time_minutes if module else '' }}"
+                   placeholder="180"
+                   class="w-32 px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none">
+        </div>
+    </div>
+
+    <!-- Materials -->
+    <div class="p-6">
+        <h2 class="text-lg font-semibold text-slate-800 mb-4">Materials</h2>
+        <div class="grid md:grid-cols-2 gap-4">
+            <div>
+                <label for="drive_file_id" class="block text-sm font-medium text-slate-700 mb-1">
+                    Google Drive File ID <span class="text-red-500">*</span>
+                </label>
+                <input type="text" id="drive_file_id" name="drive_file_id" required
+                       value="{{ module.drive_file_id if module else '' }}"
+                       placeholder="1ABC123xyz..."
+                       class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none">
+                <p class="text-xs text-slate-500 mt-1">The file ID from the Google Drive URL</p>
+            </div>
+            <div>
+                <label for="starter_repo_url" class="block text-sm font-medium text-slate-700 mb-1">Starter Repo URL</label>
+                <input type="url" id="starter_repo_url" name="starter_repo_url"
+                       value="{{ module.starter_repo_url if module else '' }}"
+                       placeholder="https://github.com/course/week1-starter"
+                       class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none">
+            </div>
+        </div>
+    </div>
+
+    <!-- Instructions -->
+    <div class="p-6">
+        <h2 class="text-lg font-semibold text-slate-800 mb-4">Instructions (Markdown)</h2>
+        <div class="grid md:grid-cols-2 gap-4">
+            <div>
+                <label for="instructions" class="block text-sm font-medium text-slate-700 mb-1">In-Class Instructions</label>
+                <textarea id="instructions" name="instructions" rows="6"
+                          class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none font-mono text-sm">{{ module.instructions if module else '' }}</textarea>
+            </div>
+            <div>
+                <label for="homework_instructions" class="block text-sm font-medium text-slate-700 mb-1">Homework Instructions</label>
+                <textarea id="homework_instructions" name="homework_instructions" rows="6"
+                          class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none font-mono text-sm">{{ module.homework_instructions if module else '' }}</textarea>
+            </div>
+        </div>
+    </div>
+
+    <!-- Grading -->
+    <div class="p-6">
+        <h2 class="text-lg font-semibold text-slate-800 mb-4">Grading Configuration</h2>
+        <div class="flex items-center gap-3 mb-4">
+            <input type="checkbox" id="grading_enabled" name="grading_enabled"
+                   {% if not module or module.grading_enabled %}checked{% endif %}
+                   class="w-5 h-5 rounded border-slate-300 text-blue-600 focus:ring-blue-500">
+            <label for="grading_enabled" class="text-sm text-slate-700">Enable Grading</label>
+        </div>
+
+        <div class="grid md:grid-cols-2 gap-4">
+            <div>
+                <label for="grading_script_url" class="block text-sm font-medium text-slate-700 mb-1">Grading Script Repo URL</label>
+                <input type="url" id="grading_script_url" name="grading_script_url"
+                       value="{{ module.grading_script_url if module else '' }}"
+                       placeholder="https://github.com/course/week1-grader"
+                       class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none">
+            </div>
+            <div>
+                <label for="max_points" class="block text-sm font-medium text-slate-700 mb-1">Max Points</label>
+                <input type="number" id="max_points" name="max_points" min="1"
+                       value="{{ module.max_points if module else 100 }}"
+                       class="w-32 px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none">
+            </div>
+        </div>
+
+        <div class="mt-4">
+            <label for="grading_criteria" class="block text-sm font-medium text-slate-700 mb-1">Grading Criteria (Markdown)</label>
+            <textarea id="grading_criteria" name="grading_criteria" rows="4"
+                      placeholder="## Rubric&#10;| Component | Points | Criteria |&#10;..."
+                      class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none font-mono text-sm">{{ module.grading_criteria if module else '' }}</textarea>
+        </div>
+    </div>
+
+    <!-- Capacity -->
+    <div class="p-6">
+        <h2 class="text-lg font-semibold text-slate-800 mb-4">Capacity</h2>
+        <div class="grid md:grid-cols-2 gap-4">
+            <div>
+                <label for="max_reviewers" class="block text-sm font-medium text-slate-700 mb-1">Max Reviewers (Pilot)</label>
+                <input type="number" id="max_reviewers" name="max_reviewers" min="1"
+                       value="{{ module.max_reviewers if module else 10 }}"
+                       class="w-32 px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none">
+            </div>
+            <div>
+                <label for="max_students" class="block text-sm font-medium text-slate-700 mb-1">Max Students (blank = unlimited)</label>
+                <input type="number" id="max_students" name="max_students" min="1"
+                       value="{{ module.max_students if module and module.max_students else '' }}"
+                       placeholder="Unlimited"
+                       class="w-32 px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none">
+            </div>
+        </div>
+    </div>
+
+    <!-- Actions -->
+    <div class="p-6 bg-slate-50 flex justify-end gap-4">
+        <a href="/admin/modules" class="px-6 py-2.5 bg-white border border-slate-300 text-slate-700 rounded-lg hover:bg-slate-50 transition-colors">
+            Cancel
+        </a>
+        <button type="submit" class="px-6 py-2.5 gradient-button text-white rounded-lg">
+            {% if is_new %}Create Module{% else %}Save Changes{% endif %}
+        </button>
+    </div>
+</form>
+{% endblock %}
