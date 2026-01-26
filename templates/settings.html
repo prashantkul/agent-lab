@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+
+{% block title %}Settings - Course Review Portal{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto px-4 py-8">
+    <div class="mb-6">
+        <a href="/dashboard" class="text-blue-600 hover:text-blue-800 text-sm mb-2 inline-block">&larr; Back to Dashboard</a>
+        <h1 class="text-2xl font-bold text-slate-800">Settings</h1>
+    </div>
+
+    {% if request.query_params.get('saved') %}
+    <div class="bg-emerald-50 border border-emerald-200 text-emerald-800 px-4 py-3 rounded-lg mb-6">
+        Settings saved successfully!
+    </div>
+    {% endif %}
+
+    <div class="bg-white rounded-xl shadow-md p-6">
+        <h2 class="text-lg font-semibold text-slate-800 mb-4">Reminder Preferences</h2>
+
+        <form action="/settings/reminders" method="post">
+            <div class="flex items-center gap-3 mb-4">
+                <input type="checkbox" id="reminder_enabled" name="reminder_enabled"
+                       {% if user.reminder_enabled %}checked{% endif %}
+                       class="w-5 h-5 rounded border-slate-300 text-blue-600 focus:ring-blue-500">
+                <label for="reminder_enabled" class="text-slate-700">
+                    Receive weekly email reminders about pending assignments
+                </label>
+            </div>
+
+            <p class="text-sm text-slate-500 mb-6">
+                If enabled, you'll receive a weekly reminder email every Monday at 9 AM if you have any pending submissions or if the module PDF has been updated.
+            </p>
+
+            <button type="submit" class="gradient-button text-white px-6 py-2.5 rounded-lg">
+                Save Changes
+            </button>
+        </form>
+    </div>
+</div>
+{% endblock %}

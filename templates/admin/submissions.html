@@ -1,0 +1,134 @@
+{% extends "admin/base.html" %}
+
+{% block title %}Manage Submissions - Admin{% endblock %}
+
+{% block admin_content %}
+<div class="flex justify-between items-center mb-6">
+    <h1 class="text-2xl font-bold text-slate-800">Manage Submissions</h1>
+    <a href="/admin/submissions/export" class="inline-flex items-center gap-2 bg-slate-100 text-slate-700 px-4 py-2 rounded-lg hover:bg-slate-200 transition-colors">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+        </svg>
+        Export CSV
+    </a>
+</div>
+
+{% if request.query_params.get('grading') %}
+<div class="bg-blue-50 border border-blue-200 text-blue-800 px-4 py-3 rounded-lg mb-6">
+    Grading started in the background. Refresh to see updated status.
+</div>
+{% endif %}
+
+{% if request.query_params.get('batch_grading') %}
+<div class="bg-blue-50 border border-blue-200 text-blue-800 px-4 py-3 rounded-lg mb-6">
+    Batch grading started for {{ request.query_params.get('batch_grading') }} submission(s).
+</div>
+{% endif %}
+
+<!-- Filters -->
+<div class="bg-white rounded-xl shadow-md p-4 mb-6">
+    <form method="get" class="flex flex-wrap gap-4 items-end">
+        <div>
+            <label class="block text-xs font-medium text-slate-500 mb-1">Module</label>
+            <select name="module_id" class="px-3 py-2 border border-slate-300 rounded-lg text-sm">
+                <option value="">All Modules</option>
+                {% for m in modules %}
+                <option value="{{ m.id }}" {% if filter_module_id == m.id %}selected{% endif %}>{{ m.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div>
+            <label class="block text-xs font-medium text-slate-500 mb-1">Type</label>
+            <select name="submission_type" class="px-3 py-2 border border-slate-300 rounded-lg text-sm">
+                <option value="">All Types</option>
+                <option value="in_class" {% if filter_type == 'in_class' %}selected{% endif %}>In-Class</option>
+                <option value="homework" {% if filter_type == 'homework' %}selected{% endif %}>Homework</option>
+            </select>
+        </div>
+        <div>
+            <label class="block text-xs font-medium text-slate-500 mb-1">Status</label>
+            <select name="status" class="px-3 py-2 border border-slate-300 rounded-lg text-sm">
+                <option value="">All Status</option>
+                <option value="pending" {% if filter_status == 'pending' %}selected{% endif %}>Pending</option>
+                <option value="completed" {% if filter_status == 'completed' %}selected{% endif %}>Completed</option>
+                <option value="failed" {% if filter_status == 'failed' %}selected{% endif %}>Failed</option>
+            </select>
+        </div>
+        <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm">
+            Filter
+        </button>
+        <a href="/admin/submissions" class="px-4 py-2 bg-slate-100 text-slate-700 rounded-lg hover:bg-slate-200 text-sm">
+            Clear
+        </a>
+    </form>
+</div>
+
+<div class="bg-white rounded-xl shadow-md overflow-hidden">
+    <table class="w-full">
+        <thead class="bg-slate-50">
+            <tr>
+                <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase">User</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase">Module</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase">Type</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase">Ratings</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase">Grade</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase">Submitted</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase">Actions</th>
+            </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-100">
+            {% for submission in submissions %}
+            {% set grade = grades[submission.id] %}
+            <tr class="hover:bg-slate-50">
+                <td class="px-6 py-4">
+                    <div class="text-sm font-medium text-slate-900">{{ submission.user.name or 'No name' }}</div>
+                    <div class="text-xs text-slate-500">{{ submission.user.email }}</div>
+                </td>
+                <td class="px-6 py-4 text-sm text-slate-600">{{ submission.module.name }}</td>
+                <td class="px-6 py-4">
+                    <span class="text-xs font-medium px-2 py-1 rounded-full
+                        {% if submission.submission_type == 'homework' %}bg-purple-100 text-purple-700
+                        {% else %}bg-blue-100 text-blue-700{% endif %}">
+                        {{ submission.submission_type|replace('_', ' ')|title }}
+                    </span>
+                </td>
+                <td class="px-6 py-4 text-xs text-slate-600">
+                    {% if submission.clarity_rating %}C: {{ submission.clarity_rating }}/5{% endif %}
+                    {% if submission.difficulty_rating %}<br>D: {{ submission.difficulty_rating }}/5{% endif %}
+                    {% if submission.time_spent_minutes %}<br>{{ submission.time_spent_minutes }}m{% endif %}
+                </td>
+                <td class="px-6 py-4">
+                    {% if grade and grade.status == 'completed' %}
+                    <span class="text-sm font-semibold text-slate-800">{{ grade.letter_grade }}</span>
+                    <span class="text-xs text-slate-500">({{ grade.total_points|int }}/{{ grade.max_points }})</span>
+                    {% elif grade and grade.status == 'running' %}
+                    <span class="text-xs text-purple-600 animate-pulse">Grading...</span>
+                    {% elif grade and grade.status == 'failed' %}
+                    <span class="text-xs text-red-600">Failed</span>
+                    {% else %}
+                    <span class="text-xs text-slate-400">Pending</span>
+                    {% endif %}
+                </td>
+                <td class="px-6 py-4 text-sm text-slate-500">{{ submission.submitted_at.strftime('%b %d, %H:%M') }}</td>
+                <td class="px-6 py-4">
+                    <div class="flex items-center gap-2 text-sm">
+                        <a href="{{ submission.github_link }}" target="_blank" class="text-blue-600 hover:text-blue-800">
+                            GitHub
+                        </a>
+                        <form action="/admin/submissions/{{ submission.id }}/grade" method="post" class="inline">
+                            <button type="submit" class="text-emerald-600 hover:text-emerald-800">
+                                Grade
+                            </button>
+                        </form>
+                    </div>
+                </td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="7" class="px-6 py-8 text-center text-slate-500">No submissions found</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

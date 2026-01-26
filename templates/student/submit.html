@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+
+{% block title %}Submit {{ submission_type|replace('_', ' ')|title }} - {{ module.name }}{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto px-4 py-8">
+    <div class="mb-6">
+        <a href="/student/module/{{ module.id }}" class="text-blue-600 hover:text-blue-800 text-sm mb-2 inline-block">&larr; Back to Module</a>
+        <h1 class="text-2xl font-bold text-slate-800">
+            Submit {{ submission_type|replace('_', ' ')|title }}
+        </h1>
+        <p class="text-slate-600 mt-1">{{ module.name }}</p>
+    </div>
+
+    {% if existing %}
+    <div class="bg-amber-50 border border-amber-200 text-amber-800 px-4 py-3 rounded-lg mb-6">
+        <p class="font-medium">You have already submitted this assignment.</p>
+        <p class="text-sm mt-1">Submitting again will update your previous submission.</p>
+    </div>
+    {% endif %}
+
+    <form action="/student/module/{{ module.id }}/submit/{{ submission_type }}" method="post" class="bg-white rounded-xl shadow-md p-6">
+        <!-- GitHub Link -->
+        <div class="mb-6">
+            <label for="github_link" class="block text-sm font-medium text-slate-700 mb-2">
+                GitHub Repository URL <span class="text-red-500">*</span>
+            </label>
+            <input type="url" id="github_link" name="github_link" required
+                   value="{{ existing.github_link if existing else '' }}"
+                   placeholder="https://github.com/yourusername/your-repo"
+                   class="w-full px-4 py-3 rounded-lg border border-slate-300 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none transition-all">
+            <p class="text-xs text-slate-500 mt-2">
+                Submit the link to your GitHub repository containing your completed work.
+            </p>
+        </div>
+
+        <!-- Comments -->
+        <div class="mb-6">
+            <label for="comments" class="block text-sm font-medium text-slate-700 mb-2">
+                Comments (optional)
+            </label>
+            <textarea id="comments" name="comments" rows="4"
+                      placeholder="Any notes about your submission, questions, or issues you encountered..."
+                      class="w-full px-4 py-3 rounded-lg border border-slate-300 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none transition-all resize-y">{{ existing.comments if existing else '' }}</textarea>
+        </div>
+
+        <!-- Grading Note -->
+        {% if module.github_classroom_url %}
+        <div class="bg-purple-50 border border-purple-100 text-purple-800 px-4 py-3 rounded-lg mb-6 text-sm">
+            <p class="flex items-center gap-2">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+                Your code is automatically graded via GitHub Classroom when you push to your repository.
+            </p>
+        </div>
+        {% endif %}
+
+        <!-- Submit Button -->
+        <div class="flex gap-4">
+            <a href="/student/module/{{ module.id }}" class="flex-1 text-center bg-slate-100 text-slate-700 px-6 py-3 rounded-lg hover:bg-slate-200 transition-colors font-medium">
+                Cancel
+            </a>
+            <button type="submit" class="flex-1 gradient-button text-white px-6 py-3 rounded-lg hover:shadow-lg transition-all font-medium">
+                {% if existing %}Update Submission{% else %}Submit{% endif %}
+            </button>
+        </div>
+    </form>
+</div>
+{% endblock %}

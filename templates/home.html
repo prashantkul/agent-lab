@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+
+{% block title %}Home - Agent Lab{% endblock %}
+
+{% block content %}
+<div class="max-w-5xl mx-auto px-4 py-16">
+    <div class="text-center mb-12">
+        <h1 class="text-3xl font-bold text-slate-800 mb-3">Welcome to Agent Lab</h1>
+        <p class="text-slate-600">Select a portal to get started</p>
+    </div>
+
+    <div class="grid md:grid-cols-{% if user.role.value == 'admin' %}3{% else %}2{% endif %} gap-6">
+        <!-- Student Portal -->
+        <a href="/student" class="group block bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 border border-slate-100 overflow-hidden">
+            <div class="h-2 bg-gradient-to-r from-purple-500 to-pink-500"></div>
+            <div class="p-8">
+                <div class="w-16 h-16 bg-gradient-to-br from-purple-500 to-pink-500 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+                    <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
+                    </svg>
+                </div>
+                <h2 class="text-xl font-bold text-slate-800 mb-2 group-hover:text-purple-600 transition-colors">Student Portal</h2>
+                <p class="text-slate-500 mb-4">Access course materials, submit assignments, and view grades</p>
+                <div class="flex items-center text-purple-600 font-medium">
+                    <span>Enter Portal</span>
+                    <svg class="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/>
+                    </svg>
+                </div>
+            </div>
+        </a>
+
+        <!-- Reviewer Portal -->
+        <a href="/dashboard" class="group block bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 border border-slate-100 overflow-hidden">
+            <div class="h-2 bg-gradient-to-r from-emerald-500 to-teal-500"></div>
+            <div class="p-8">
+                <div class="w-16 h-16 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+                    <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                    </svg>
+                </div>
+                <h2 class="text-xl font-bold text-slate-800 mb-2 group-hover:text-emerald-600 transition-colors">Reviewer Portal</h2>
+                <p class="text-slate-500 mb-4">Review course materials, complete exercises, and provide feedback</p>
+                <div class="flex items-center text-emerald-600 font-medium">
+                    <span>Enter Portal</span>
+                    <svg class="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/>
+                    </svg>
+                </div>
+            </div>
+        </a>
+
+        {% if user.role.value == 'admin' %}
+        <!-- Admin Portal -->
+        <a href="/admin" class="group block bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 border border-slate-100 overflow-hidden">
+            <div class="h-2 bg-gradient-to-r from-blue-500 to-cyan-500"></div>
+            <div class="p-8">
+                <div class="w-16 h-16 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+                    <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                    </svg>
+                </div>
+                <h2 class="text-xl font-bold text-slate-800 mb-2 group-hover:text-blue-600 transition-colors">Admin Portal</h2>
+                <p class="text-slate-500 mb-4">Manage courses, modules, users, and review submissions</p>
+                <div class="flex items-center text-blue-600 font-medium">
+                    <span>Enter Portal</span>
+                    <svg class="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/>
+                    </svg>
+                </div>
+            </div>
+        </a>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

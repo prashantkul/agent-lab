@@ -1,0 +1,199 @@
+{% extends "admin/base.html" %}
+
+{% block title %}Import Modules - Agent Lab{% endblock %}
+
+{% block admin_content %}
+<div class="max-w-5xl">
+    <div class="mb-6">
+        <a href="{% if course %}/admin/courses/{{ course.id }}/modules{% else %}/admin/modules{% endif %}" class="text-purple-600 hover:text-purple-800 text-base flex items-center gap-1">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+            </svg>
+            Back
+        </a>
+    </div>
+
+    <div class="bg-white rounded-2xl shadow-lg overflow-hidden">
+        <div class="gradient-header px-6 py-4">
+            <h1 class="text-xl font-semibold text-white">Import Modules from PDF/Image</h1>
+            <p class="text-white/70 text-base mt-1">Upload a syllabus to auto-extract module information using AI</p>
+        </div>
+
+        <div class="p-6">
+            {% if error %}
+            <div class="mb-6 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl text-base">
+                {{ error }}
+            </div>
+            {% endif %}
+
+            {% if not extracted %}
+            <!-- Upload Form -->
+            <form id="extractForm" action="/admin/modules/import" method="post" enctype="multipart/form-data" class="space-y-6">
+                <!-- Course Selection -->
+                <div>
+                    <label class="block text-base font-medium text-gray-700 mb-2">Select Course *</label>
+                    <select name="course_id" required class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 font-mono text-base">
+                        <option value="">-- Select a course --</option>
+                        {% for c in courses %}
+                        <option value="{{ c.id }}" {% if course and course.id == c.id %}selected{% endif %}>{{ c.code }} - {{ c.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="border-2 border-dashed border-gray-300 rounded-xl p-8 text-center hover:border-purple-400 transition-colors">
+                    <svg class="w-12 h-12 text-gray-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
+                    </svg>
+                    <p class="text-gray-600 mb-2">Upload a syllabus image or PDF</p>
+                    <p class="text-base text-gray-400 mb-4">Supports PNG, JPG, GIF, WebP, and PDF files</p>
+                    <input type="file" name="file" id="file" accept="image/*,.pdf" required
+                           class="block w-full text-base text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-base file:font-semibold file:bg-purple-50 file:text-purple-700 hover:file:bg-purple-100 cursor-pointer">
+                </div>
+
+                <div class="flex justify-end">
+                    <button type="submit" id="extractBtn" class="gradient-button text-white px-6 py-2.5 rounded-xl font-medium hover:shadow-lg transition-all duration-200 flex items-center gap-2 text-base">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/>
+                        </svg>
+                        Extract with AI
+                    </button>
+                </div>
+            </form>
+
+            <!-- Progress Overlay -->
+            <div id="progressOverlay" class="hidden fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center">
+                <div class="bg-white rounded-2xl shadow-2xl p-8 max-w-md w-full mx-4 text-center">
+                    <div class="w-16 h-16 bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl flex items-center justify-center mx-auto mb-6 animate-pulse">
+                        <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/>
+                        </svg>
+                    </div>
+                    <h3 class="text-xl font-semibold text-gray-800 mb-2">Extracting with AI</h3>
+                    <p class="text-gray-500 mb-6">Analyzing your document...</p>
+
+                    <!-- Progress Bar -->
+                    <div class="w-full bg-gray-200 rounded-full h-2 mb-4 overflow-hidden">
+                        <div id="progressBar" class="h-full bg-gradient-to-r from-purple-500 to-purple-600 rounded-full transition-all duration-500" style="width: 0%"></div>
+                    </div>
+                    <p id="progressText" class="text-base text-gray-400">Starting extraction...</p>
+                </div>
+            </div>
+
+            <script>
+                document.getElementById('extractForm').addEventListener('submit', function(e) {
+                    const fileInput = document.getElementById('file');
+                    if (!fileInput.files.length) return;
+
+                    document.getElementById('progressOverlay').classList.remove('hidden');
+
+                    const progressBar = document.getElementById('progressBar');
+                    const progressText = document.getElementById('progressText');
+
+                    let progress = 0;
+                    const messages = [
+                        'Uploading file...',
+                        'Processing document...',
+                        'Analyzing with AI...',
+                        'Extracting all modules...',
+                        'Almost done...'
+                    ];
+
+                    const interval = setInterval(() => {
+                        if (progress < 90) {
+                            progress += Math.random() * 15;
+                            if (progress > 90) progress = 90;
+                            progressBar.style.width = progress + '%';
+
+                            const msgIndex = Math.min(Math.floor(progress / 20), messages.length - 1);
+                            progressText.textContent = messages[msgIndex];
+                        }
+                    }, 500);
+                });
+            </script>
+
+            {% else %}
+            <!-- Extracted Modules Review -->
+            <form action="/admin/modules/import/create" method="post" class="space-y-6">
+                <input type="hidden" name="course_id" value="{{ course.id if course else '' }}">
+                <input type="hidden" name="module_count" value="{{ extracted.modules|length if extracted.modules else 0 }}">
+
+                <div class="bg-emerald-50 border border-emerald-200 text-emerald-700 px-4 py-3 rounded-xl mb-6 flex items-center gap-2 text-base">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                    Found {{ extracted.modules|length if extracted.modules else 0 }} module(s)! Select which ones to import.
+                </div>
+
+                {% if course %}
+                <div class="bg-purple-50 border border-purple-200 text-purple-700 px-4 py-3 rounded-xl mb-6 text-base">
+                    Importing to: <strong>{{ course.code }} - {{ course.name }}</strong>
+                </div>
+                {% endif %}
+
+                {% if extracted.modules %}
+                <div class="space-y-4">
+                    {% for module in extracted.modules %}
+                    <div class="border border-gray-200 rounded-xl p-4 hover:border-purple-300 transition-colors">
+                        <div class="flex items-start gap-4">
+                            <input type="checkbox" name="module_{{ loop.index0 }}_selected" checked
+                                   class="mt-1 h-5 w-5 text-purple-600 rounded border-gray-300 focus:ring-purple-500">
+                            <div class="flex-1 space-y-3">
+                                <div class="flex items-center gap-3">
+                                    <span class="text-xs font-semibold text-purple-600 bg-purple-50 px-2 py-1 rounded-lg">
+                                        Week {{ module.week_number or loop.index }}
+                                    </span>
+                                    <input type="text" name="module_{{ loop.index0 }}_name" value="{{ module.name or '' }}"
+                                           class="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 font-mono text-base font-medium">
+                                    <input type="hidden" name="module_{{ loop.index0 }}_week_number" value="{{ module.week_number or loop.index }}">
+                                </div>
+
+                                <div>
+                                    <label class="block text-xs text-gray-500 mb-1">Short Description</label>
+                                    <input type="text" name="module_{{ loop.index0 }}_short_description" value="{{ module.short_description or '' }}"
+                                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 font-mono text-base">
+                                </div>
+
+                                <div>
+                                    <label class="block text-xs text-gray-500 mb-1">Learning Objectives (one per line)</label>
+                                    <textarea name="module_{{ loop.index0 }}_learning_objectives" rows="4"
+                                              class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 font-mono text-base">{% if module.learning_objectives %}{% for obj in module.learning_objectives %}{{ obj }}
+{% endfor %}{% endif %}</textarea>
+                                </div>
+
+                                <div class="grid grid-cols-2 gap-3">
+                                    <div>
+                                        <label class="block text-xs text-gray-500 mb-1">Estimated Time (min)</label>
+                                        <input type="number" name="module_{{ loop.index0 }}_estimated_time_minutes" value="{{ module.estimated_time_minutes or '' }}"
+                                               class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 font-mono text-base">
+                                    </div>
+                                    <div>
+                                        <label class="block text-xs text-gray-500 mb-1">Drive File ID</label>
+                                        <input type="text" name="module_{{ loop.index0 }}_drive_file_id" placeholder="Optional"
+                                               class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 font-mono text-base">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="text-center py-8 text-gray-500">
+                    No modules were extracted. Try with a different file.
+                </div>
+                {% endif %}
+
+                <div class="flex justify-end gap-3 pt-4 border-t border-gray-200">
+                    <a href="/admin/modules/import{% if course %}?course_id={{ course.id }}{% endif %}" class="px-6 py-2.5 rounded-xl font-medium text-gray-600 hover:bg-gray-100 transition-colors text-base">
+                        Start Over
+                    </a>
+                    <button type="submit" class="gradient-button text-white px-6 py-2.5 rounded-xl font-medium hover:shadow-lg transition-all duration-200 text-base">
+                        Import Selected Modules
+                    </button>
+                </div>
+            </form>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

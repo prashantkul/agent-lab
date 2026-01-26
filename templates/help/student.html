@@ -1,0 +1,205 @@
+{% extends "base.html" %}
+
+{% block title %}Student Help - Course Review Portal{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto px-6 py-8">
+    <!-- Header -->
+    <div class="mb-8">
+        <a href="/student/home" class="inline-flex items-center gap-2 text-slate-500 hover:text-slate-700 text-sm font-medium mb-4">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+            </svg>
+            Back to Dashboard
+        </a>
+        <h1 class="text-3xl font-bold text-gray-800">Student Help Guide</h1>
+        <p class="text-gray-600 mt-2">Everything you need to know about completing your coursework</p>
+    </div>
+
+    <!-- Quick Start -->
+    <div class="bg-gradient-to-r from-purple-50 to-blue-50 rounded-xl p-6 mb-8 border border-purple-100">
+        <h2 class="text-lg font-semibold text-purple-800 mb-3">Quick Start</h2>
+        <ol class="space-y-3">
+            <li class="flex gap-3">
+                <span class="flex-shrink-0 w-6 h-6 rounded-full bg-purple-600 text-white text-sm flex items-center justify-center font-medium">1</span>
+                <span class="text-gray-700">Access your assigned module from the dashboard</span>
+            </li>
+            <li class="flex gap-3">
+                <span class="flex-shrink-0 w-6 h-6 rounded-full bg-purple-600 text-white text-sm flex items-center justify-center font-medium">2</span>
+                <span class="text-gray-700">Study the PDF course material</span>
+            </li>
+            <li class="flex gap-3">
+                <span class="flex-shrink-0 w-6 h-6 rounded-full bg-purple-600 text-white text-sm flex items-center justify-center font-medium">3</span>
+                <span class="text-gray-700">Accept and complete the GitHub Classroom assignment</span>
+            </li>
+            <li class="flex gap-3">
+                <span class="flex-shrink-0 w-6 h-6 rounded-full bg-purple-600 text-white text-sm flex items-center justify-center font-medium">4</span>
+                <span class="text-gray-700">Submit your work and view your grade</span>
+            </li>
+        </ol>
+    </div>
+
+    <!-- Sections -->
+    <div class="space-y-6">
+        <!-- Accessing Modules -->
+        <div class="bg-white rounded-xl shadow-md overflow-hidden">
+            <button onclick="toggleHelp('modules')" class="w-full flex items-center justify-between p-5 hover:bg-gray-50 transition-colors">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-lg bg-blue-100 flex items-center justify-center">
+                        <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
+                        </svg>
+                    </div>
+                    <h3 class="text-lg font-semibold text-gray-800">Accessing Course Modules</h3>
+                </div>
+                <svg class="w-5 h-5 text-gray-400 transform transition-transform" id="modules-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                </svg>
+            </button>
+            <div id="modules-content" class="hidden px-5 pb-5">
+                <div class="pl-13 border-l-2 border-blue-100 ml-5 pl-8 space-y-3 text-gray-600">
+                    <p>Your enrolled modules appear on your dashboard based on the course schedule.</p>
+                    <p>Each module includes:</p>
+                    <ul class="list-disc list-inside space-y-1 ml-4">
+                        <li><strong>PDF Course Material</strong> - Lecture slides and reference material</li>
+                        <li><strong>Assignment Overview</strong> - Summary of what you'll build</li>
+                        <li><strong>GitHub Assignment</strong> - Hands-on coding exercise</li>
+                    </ul>
+                    <p>Modules unlock weekly according to the course schedule.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- GitHub Classroom -->
+        <div class="bg-white rounded-xl shadow-md overflow-hidden">
+            <button onclick="toggleHelp('github')" class="w-full flex items-center justify-between p-5 hover:bg-gray-50 transition-colors">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-lg bg-emerald-100 flex items-center justify-center">
+                        <svg class="w-5 h-5 text-emerald-600" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
+                        </svg>
+                    </div>
+                    <h3 class="text-lg font-semibold text-gray-800">Completing GitHub Assignments</h3>
+                </div>
+                <svg class="w-5 h-5 text-gray-400 transform transition-transform" id="github-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                </svg>
+            </button>
+            <div id="github-content" class="hidden px-5 pb-5">
+                <div class="pl-13 border-l-2 border-emerald-100 ml-5 pl-8 space-y-3 text-gray-600">
+                    <p><strong>Step 1: Accept the Assignment</strong></p>
+                    <p class="ml-4">Click the green <span class="px-2 py-0.5 bg-emerald-100 text-emerald-700 rounded text-sm font-medium">Accept Assignment</span> button. This creates your personal repository.</p>
+
+                    <p><strong>Step 2: Clone Your Repository</strong></p>
+                    <pre class="bg-gray-100 rounded-lg p-3 text-sm overflow-x-auto">git clone https://github.com/your-org/assignment-your-username.git
+cd assignment-your-username</pre>
+
+                    <p><strong>Step 3: Complete the Assignment</strong></p>
+                    <p class="ml-4">Follow the instructions in the README.md file. The assignment will guide you through building an AI agent.</p>
+
+                    <p><strong>Step 4: Test Locally</strong></p>
+                    <pre class="bg-gray-100 rounded-lg p-3 text-sm overflow-x-auto"># Install dependencies
+pip install -r requirements.txt
+
+# Run your code
+python main.py</pre>
+
+                    <p><strong>Step 5: Submit Your Work</strong></p>
+                    <pre class="bg-gray-100 rounded-lg p-3 text-sm overflow-x-auto">git add .
+git commit -m "Complete assignment"
+git push</pre>
+
+                    <p><strong>Step 6: Check Your Grade</strong></p>
+                    <p class="ml-4">After pushing, go to the <strong>Actions</strong> tab in your GitHub repository to see the autograder results.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Understanding Grades -->
+        <div class="bg-white rounded-xl shadow-md overflow-hidden">
+            <button onclick="toggleHelp('grades')" class="w-full flex items-center justify-between p-5 hover:bg-gray-50 transition-colors">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-lg bg-amber-100 flex items-center justify-center">
+                        <svg class="w-5 h-5 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+                        </svg>
+                    </div>
+                    <h3 class="text-lg font-semibold text-gray-800">Understanding Your Grades</h3>
+                </div>
+                <svg class="w-5 h-5 text-gray-400 transform transition-transform" id="grades-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                </svg>
+            </button>
+            <div id="grades-content" class="hidden px-5 pb-5">
+                <div class="pl-13 border-l-2 border-amber-100 ml-5 pl-8 space-y-3 text-gray-600">
+                    <p>Your assignments are automatically graded when you push to GitHub.</p>
+                    <p><strong>Grading criteria typically includes:</strong></p>
+                    <ul class="list-disc list-inside space-y-1 ml-4">
+                        <li>Code structure and organization</li>
+                        <li>Correct implementation of required features</li>
+                        <li>Passing test cases</li>
+                        <li>Code quality and best practices</li>
+                    </ul>
+                    <p><strong>To view detailed results:</strong></p>
+                    <ol class="list-decimal list-inside space-y-1 ml-4">
+                        <li>Go to your repository on GitHub</li>
+                        <li>Click the "Actions" tab</li>
+                        <li>Click on the latest workflow run</li>
+                        <li>Expand the grading step to see detailed feedback</li>
+                    </ol>
+                    <p class="text-emerald-600">Tip: You can push multiple times to improve your grade before the deadline!</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Getting Help -->
+        <div class="bg-white rounded-xl shadow-md overflow-hidden">
+            <button onclick="toggleHelp('help')" class="w-full flex items-center justify-between p-5 hover:bg-gray-50 transition-colors">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-lg bg-purple-100 flex items-center justify-center">
+                        <svg class="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                    </div>
+                    <h3 class="text-lg font-semibold text-gray-800">Getting Help</h3>
+                </div>
+                <svg class="w-5 h-5 text-gray-400 transform transition-transform" id="help-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                </svg>
+            </button>
+            <div id="help-content" class="hidden px-5 pb-5">
+                <div class="pl-13 border-l-2 border-purple-100 ml-5 pl-8 space-y-3 text-gray-600">
+                    <p><strong>If you're stuck on an assignment:</strong></p>
+                    <ul class="list-disc list-inside space-y-1 ml-4">
+                        <li>Re-read the assignment README carefully</li>
+                        <li>Check the course PDF for relevant concepts</li>
+                        <li>Look at the test cases for hints on expected behavior</li>
+                        <li>Review the error messages from the autograder</li>
+                    </ul>
+                    <p><strong>If you need more help:</strong></p>
+                    <ul class="list-disc list-inside space-y-1 ml-4">
+                        <li>Post in the course discussion forum</li>
+                        <li>Attend office hours</li>
+                        <li>Email the instructor or TA</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Contact -->
+    <div class="mt-8 bg-gray-50 rounded-xl p-6 text-center">
+        <p class="text-gray-600">Still have questions?</p>
+        <p class="text-gray-800 font-medium mt-1">Contact your instructor or post in the course forum.</p>
+    </div>
+</div>
+
+<script>
+function toggleHelp(section) {
+    const content = document.getElementById(section + '-content');
+    const icon = document.getElementById(section + '-icon');
+    content.classList.toggle('hidden');
+    icon.classList.toggle('rotate-180');
+}
+</script>
+{% endblock %}

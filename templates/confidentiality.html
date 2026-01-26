@@ -1,0 +1,96 @@
+{% extends "base.html" %}
+
+{% block title %}Confidentiality Agreement - Agent Lab{% endblock %}
+
+{% block content %}
+<div class="max-w-3xl mx-auto px-4 py-12">
+    <div class="bg-white rounded-2xl shadow-xl overflow-hidden">
+        <!-- Header -->
+        <div class="gradient-header px-8 py-6">
+            <h1 class="text-2xl font-bold text-white">Confidentiality Agreement</h1>
+            <p class="text-white/70 mt-1">Please review and accept before continuing</p>
+        </div>
+
+        <!-- Agreement Content -->
+        <div class="p-8">
+            <div class="prose prose-gray max-w-none mb-8">
+                <h2 class="text-xl font-semibold text-gray-800 mb-4">Agent Lab Course Material Review Program</h2>
+
+                <p class="text-gray-600 mb-4 text-base leading-relaxed">
+                    Welcome to the Agent Lab Course Material Review Program. By participating as a reviewer,
+                    you will have early access to course materials that are still in development. This access
+                    comes with important responsibilities.
+                </p>
+
+                <h3 class="text-base font-semibold text-gray-800 mt-6 mb-3">1. Confidentiality Obligations</h3>
+                <p class="text-gray-600 mb-4 text-base leading-relaxed">
+                    As a reviewer, you agree to keep all course materials, including but not limited to:
+                </p>
+                <ul class="list-disc pl-6 text-gray-600 mb-4 space-y-1 text-base">
+                    <li>Lecture slides, PDFs, and documentation</li>
+                    <li>Code exercises, starter repositories, and solutions</li>
+                    <li>Homework assignments and grading criteria</li>
+                    <li>Any proprietary methodologies or techniques presented</li>
+                </ul>
+                <p class="text-gray-600 mb-4 text-base leading-relaxed">
+                    <strong class="text-gray-800">strictly confidential</strong> and not share, distribute, copy, or reproduce them
+                    in any form without explicit written permission from the course administrators.
+                </p>
+
+                <h3 class="text-base font-semibold text-gray-800 mt-6 mb-3">2. Permitted Use</h3>
+                <p class="text-gray-600 mb-4 text-base leading-relaxed">
+                    You may use the materials solely for the purpose of:
+                </p>
+                <ul class="list-disc pl-6 text-gray-600 mb-4 space-y-1 text-base">
+                    <li>Completing the review exercises</li>
+                    <li>Providing constructive feedback to improve the course</li>
+                    <li>Personal learning and professional development</li>
+                </ul>
+
+                <h3 class="text-base font-semibold text-gray-800 mt-6 mb-3">3. Feedback and Contributions</h3>
+                <p class="text-gray-600 mb-4 text-base leading-relaxed">
+                    Any feedback, suggestions, or improvements you provide may be incorporated into the
+                    course materials. You grant UCLA Extension and the course instructors a non-exclusive,
+                    royalty-free license to use your feedback.
+                </p>
+
+                <h3 class="text-base font-semibold text-gray-800 mt-6 mb-3">4. Duration</h3>
+                <p class="text-gray-600 mb-4 text-base leading-relaxed">
+                    This confidentiality obligation remains in effect for a period of two (2) years from
+                    the date of acceptance, or until the materials are publicly released, whichever comes first.
+                </p>
+
+                <h3 class="text-base font-semibold text-gray-800 mt-6 mb-3">5. Acknowledgment</h3>
+                <p class="text-gray-600 mb-4 text-base leading-relaxed">
+                    By clicking "I Accept" below, you acknowledge that you have read, understood, and agree
+                    to be bound by the terms of this Confidentiality Agreement.
+                </p>
+            </div>
+
+            <!-- Accept Form -->
+            <form action="/accept-terms" method="post" class="border-t border-gray-200 pt-6">
+                <div class="flex items-start gap-3 mb-6">
+                    <input type="checkbox" id="agree" name="agree" required
+                           class="mt-1 h-5 w-5 text-purple-600 rounded border-gray-300 focus:ring-purple-500">
+                    <label for="agree" class="text-gray-600 text-base">
+                        I have read and agree to the terms of this Confidentiality Agreement. I understand
+                        that violation of these terms may result in removal from the review program and
+                        potential legal action.
+                    </label>
+                </div>
+
+                <div class="flex gap-4">
+                    <button type="submit"
+                            class="gradient-button text-white px-8 py-3 rounded-xl font-semibold hover:shadow-lg transition-all duration-200 text-base">
+                        I Accept
+                    </button>
+                    <a href="/auth/logout"
+                       class="px-8 py-3 rounded-xl font-semibold text-gray-500 hover:bg-gray-100 transition-colors text-base">
+                        Decline & Sign Out
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

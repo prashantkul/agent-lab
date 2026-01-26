@@ -1,0 +1,184 @@
+{% extends "base.html" %}
+
+{% block title %}Grade Report - {{ module.name }}{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto px-4 py-8">
+    <!-- Header -->
+    <div class="mb-6">
+        <a href="/student/module/{{ module.id }}" class="text-blue-600 hover:text-blue-800 text-sm mb-2 inline-block">&larr; Back to Module</a>
+        <h1 class="text-2xl font-bold text-slate-800">Grade Report</h1>
+        <p class="text-slate-600 mt-1">{{ module.name }} - {{ submission.submission_type|replace('_', ' ')|title }}</p>
+    </div>
+
+    {% if request.query_params.get('refreshed') %}
+    <div class="bg-emerald-50 border border-emerald-200 text-emerald-700 px-4 py-3 rounded-xl mb-6 flex items-center gap-3">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+        </svg>
+        <span>Grade refreshed from GitHub!</span>
+    </div>
+    {% endif %}
+
+    <!-- Workflow Status -->
+    <div class="bg-white rounded-xl shadow-md p-6 mb-6">
+        <div class="flex justify-between items-start">
+            <div>
+                <h2 class="text-lg font-semibold text-slate-800 mb-2">GitHub Actions Status</h2>
+                <p class="text-sm text-slate-500">
+                    <a href="{{ submission.github_link }}" target="_blank" class="text-blue-600 hover:text-blue-800">
+                        {{ submission.github_link }}
+                    </a>
+                </p>
+            </div>
+            <form action="/student/submission/{{ submission.id }}/refresh-grade" method="post">
+                <button type="submit" class="inline-flex items-center gap-2 px-4 py-2 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition-colors text-sm font-medium">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                    </svg>
+                    Refresh Grade
+                </button>
+            </form>
+        </div>
+
+        <div class="mt-4 flex items-center gap-4">
+            {% if workflow_status.status == 'completed' %}
+                {% if workflow_status.conclusion == 'success' %}
+                <span class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-100 text-emerald-700 text-sm font-medium">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                    </svg>
+                    Grading Complete
+                </span>
+                {% else %}
+                <span class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-red-100 text-red-700 text-sm font-medium">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                    </svg>
+                    Grading Failed
+                </span>
+                {% endif %}
+            {% elif workflow_status.status == 'in_progress' %}
+            <span class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-100 text-amber-700 text-sm font-medium">
+                <svg class="w-4 h-4 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                </svg>
+                Grading in Progress...
+            </span>
+            {% elif workflow_status.status == 'queued' %}
+            <span class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-slate-100 text-slate-700 text-sm font-medium">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+                Queued
+            </span>
+            {% elif workflow_status.status == 'no_workflow' %}
+            <span class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-slate-100 text-slate-600 text-sm font-medium">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+                No Grading Workflow Found
+            </span>
+            {% else %}
+            <span class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-slate-100 text-slate-600 text-sm font-medium">
+                {{ workflow_status.status or 'Unknown' }}
+            </span>
+            {% endif %}
+
+            {% if workflow_status.url %}
+            <a href="{{ workflow_status.url }}" target="_blank" class="text-sm text-blue-600 hover:text-blue-800">
+                View on GitHub &rarr;
+            </a>
+            {% endif %}
+        </div>
+    </div>
+
+    {% if grade_report %}
+    <!-- Score Summary -->
+    <div class="bg-white rounded-xl shadow-md p-6 mb-6">
+        <div class="flex items-center justify-between">
+            <div>
+                <h2 class="text-lg font-semibold text-slate-800">Total Score</h2>
+                <p class="text-sm text-slate-500">{{ grade_report.assignment }}</p>
+            </div>
+            <div class="text-right">
+                <div class="text-4xl font-bold {% if grade_report.percentage >= 80 %}text-emerald-600{% elif grade_report.percentage >= 60 %}text-amber-600{% else %}text-red-600{% endif %}">
+                    {{ grade_report.total|round(1) }}/{{ grade_report.max_score|round(1) }}
+                </div>
+                <div class="text-sm text-slate-500">{{ grade_report.percentage|round(1) }}%</div>
+            </div>
+        </div>
+
+        <!-- Progress bar -->
+        <div class="mt-4 h-3 bg-slate-100 rounded-full overflow-hidden">
+            <div class="h-full {% if grade_report.percentage >= 80 %}bg-emerald-500{% elif grade_report.percentage >= 60 %}bg-amber-500{% else %}bg-red-500{% endif %} rounded-full transition-all"
+                 style="width: {{ grade_report.percentage }}%"></div>
+        </div>
+    </div>
+
+    <!-- Detailed Sections -->
+    <div class="space-y-4">
+        {% for section in grade_report.sections %}
+        <div class="bg-white rounded-xl shadow-md overflow-hidden">
+            <div class="p-4 border-b border-slate-100 flex justify-between items-center {% if section.score == section.max_score %}bg-emerald-50{% elif section.score >= section.max_score * 0.7 %}bg-amber-50{% else %}bg-red-50{% endif %}">
+                <h3 class="font-semibold text-slate-800">{{ section.name }}</h3>
+                <span class="text-lg font-bold {% if section.score == section.max_score %}text-emerald-600{% elif section.score >= section.max_score * 0.7 %}text-amber-600{% else %}text-red-600{% endif %}">
+                    {{ section.score|round(1) }}/{{ section.max_score|round(1) }}
+                </span>
+            </div>
+            <div class="p-4">
+                <ul class="space-y-2">
+                    {% for detail in section.details %}
+                    <li class="flex items-start gap-2 text-sm">
+                        {% if detail.startswith('✓') %}
+                        <span class="text-emerald-600 font-bold">✓</span>
+                        <span class="text-slate-700">{{ detail[2:] }}</span>
+                        {% elif detail.startswith('✗') %}
+                        <span class="text-red-600 font-bold">✗</span>
+                        <span class="text-slate-700">{{ detail[2:] }}</span>
+                        {% elif detail.startswith('⚠') %}
+                        <span class="text-amber-600 font-bold">⚠</span>
+                        <span class="text-slate-700">{{ detail[2:] }}</span>
+                        {% else %}
+                        <span class="text-slate-600">{{ detail }}</span>
+                        {% endif %}
+                    </li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    {% if grade_report.errors %}
+    <!-- Errors -->
+    <div class="bg-red-50 rounded-xl shadow-md p-6 mt-6">
+        <h3 class="font-semibold text-red-800 mb-3">Errors Encountered</h3>
+        <ul class="space-y-2">
+            {% for error in grade_report.errors %}
+            <li class="text-sm text-red-700">{{ error }}</li>
+            {% endfor %}
+        </ul>
+    </div>
+    {% endif %}
+
+    {% else %}
+    <!-- No grade yet -->
+    <div class="bg-slate-50 rounded-xl shadow-md p-8 text-center">
+        <svg class="w-16 h-16 text-slate-300 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+        </svg>
+        <h3 class="text-lg font-medium text-slate-600 mb-2">No Grade Available Yet</h3>
+        <p class="text-slate-500 mb-4">
+            {% if workflow_status.status == 'in_progress' %}
+            Grading is in progress. Check back soon!
+            {% elif workflow_status.status == 'no_workflow' %}
+            No grading workflow found in your repository. Make sure you have the autograding workflow set up.
+            {% else %}
+            Push your code to trigger the autograding workflow, then click "Refresh Grade" to fetch results.
+            {% endif %}
+        </p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
