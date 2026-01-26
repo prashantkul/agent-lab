@@ -6,6 +6,7 @@ ARG CACHEBUST=1
 # Set environment variables
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
+ENV PORT=8000
 
 # Set work directory
 WORKDIR /app
