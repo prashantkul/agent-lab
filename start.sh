@@ -1,15 +1,12 @@
 #!/bin/bash
 set -e
 
-# Default to 8000 if PORT not set
-PORT="${PORT:-8000}"
-
 echo "=== Starting Application ==="
-echo "PORT: $PORT"
+echo "PORT env: $PORT"
 echo "DATABASE_URL is set: $([ -n "$DATABASE_URL" ] && echo 'yes' || echo 'no')"
 
 echo "=== Running migrations ==="
 alembic upgrade head
 
-echo "=== Starting uvicorn ==="
-exec uvicorn app.main:app --host 0.0.0.0 --port "$PORT" --log-level debug
+echo "=== Starting uvicorn on port 8000 ==="
+exec uvicorn app.main:app --host 0.0.0.0 --port 8000 --log-level debug

@@ -1,5 +1,8 @@
 FROM python:3.11-slim
 
+# Cache bust: v2
+ARG CACHEBUST=1
+
 # Set environment variables
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
