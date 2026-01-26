@@ -1,0 +1,93 @@
+{% extends "admin/base.html" %}
+
+{% block title %}{{ course.name }} - Modules{% endblock %}
+
+{% block admin_content %}
+<div class="mb-6">
+    <a href="/admin/courses" class="text-purple-600 hover:text-purple-800 text-base flex items-center gap-1 mb-4">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+        </svg>
+        Back to Courses
+    </a>
+    <div class="flex justify-between items-center">
+        <div>
+            <span class="text-xs font-semibold text-purple-600 bg-purple-50 px-2 py-1 rounded-lg">{{ course.code }}</span>
+            <h1 class="text-2xl font-bold text-gray-800 mt-2">{{ course.name }}</h1>
+            {% if course.term %}
+            <p class="text-gray-500 text-base mt-1">{{ course.term }}</p>
+            {% endif %}
+        </div>
+        <div class="flex items-center gap-3">
+            <a href="/admin/modules/import?course_id={{ course.id }}" class="inline-flex items-center gap-2 bg-white border border-gray-200 text-gray-700 px-4 py-2 rounded-xl hover:bg-gray-50 transition-colors text-base font-medium shadow-sm">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/>
+                </svg>
+                Import from PDF
+            </a>
+            <a href="/admin/modules/new?course_id={{ course.id }}" class="inline-flex items-center gap-2 gradient-button text-white px-4 py-2 rounded-xl text-base font-medium shadow-lg">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                </svg>
+                Add Module
+            </a>
+        </div>
+    </div>
+</div>
+
+<div class="bg-white rounded-2xl shadow-lg overflow-hidden">
+    <table class="w-full">
+        <thead class="bg-gray-50">
+            <tr>
+                <th class="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Module</th>
+                <th class="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Visibility</th>
+                <th class="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Reviewers</th>
+                <th class="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Submissions</th>
+                <th class="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Actions</th>
+            </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-100">
+            {% for module in modules %}
+            <tr class="hover:bg-gray-50 transition-colors">
+                <td class="px-6 py-4">
+                    <div class="flex items-center gap-3">
+                        <span class="text-xs font-semibold text-purple-600 bg-purple-50 px-3 py-1.5 rounded-lg">
+                            Week {{ module.week_number }}
+                        </span>
+                        <span class="text-base font-medium text-gray-900">{{ module.name }}</span>
+                    </div>
+                </td>
+                <td class="px-6 py-4">
+                    <span class="text-xs font-medium px-3 py-1.5 rounded-full
+                        {% if module.visibility.value == 'active' %}bg-emerald-100 text-emerald-700
+                        {% elif module.visibility.value == 'pilot_review' %}bg-amber-100 text-amber-700
+                        {% elif module.visibility.value == 'draft' %}bg-gray-100 text-gray-600
+                        {% else %}bg-red-100 text-red-700{% endif %}">
+                        {{ module.visibility.value|replace('_', ' ')|title }}
+                    </span>
+                </td>
+                <td class="px-6 py-4 text-base text-gray-600">
+                    {{ module_stats[module.id].reviewer_count }}/{{ module.max_reviewers }}
+                </td>
+                <td class="px-6 py-4 text-base text-gray-600">
+                    {{ module_stats[module.id].submission_count }}
+                </td>
+                <td class="px-6 py-4">
+                    <div class="flex items-center gap-3">
+                        <a href="/admin/modules/{{ module.id }}/edit" class="text-purple-600 hover:text-purple-800 text-base font-medium">
+                            Edit
+                        </a>
+                    </div>
+                </td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="5" class="px-6 py-8 text-center text-gray-400 text-base">
+                    No modules yet. Add modules manually or import from a PDF.
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

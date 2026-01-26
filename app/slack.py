@@ -26,19 +26,29 @@ async def notify_slack_new_submission(
     reviewer_email: str,
     module_name: str,
     submission_type: str,
-    github_link: str,
+    github_link: Optional[str],
     clarity_rating: Optional[int],
     difficulty_rating: Optional[int],
     time_spent: Optional[int],
     comments: str,
+    feedback_responses: Optional[dict] = None,
 ):
-    """Send rich Slack notification for new submission."""
+    """Send rich Slack notification for new feedback submission."""
     # Truncate comments for Slack (keep it digestible)
-    preview_comments = comments[:500] + "..." if len(comments) > 500 else comments
+    preview_comments = comments[:500] + "..." if len(comments) > 500 else comments if comments else "No additional comments"
 
-    clarity_str = f"{'*' * clarity_rating} ({clarity_rating}/5)" if clarity_rating else "N/A"
-    difficulty_str = f"{'*' * difficulty_rating} ({difficulty_rating}/5)" if difficulty_rating else "N/A"
     time_str = f"{time_spent} minutes" if time_spent else "N/A"
+
+    # Build ratings from feedback_responses
+    ratings_text = ""
+    if feedback_responses:
+        ratings_text = (
+            f"*Objectives:* {feedback_responses.get('q_objectives', 'N/A')}/10  |  "
+            f"*Content:* {feedback_responses.get('q_content', 'N/A')}/10  |  "
+            f"*Starter Code:* {feedback_responses.get('q_starter_code', 'N/A')}/10\n"
+            f"*Difficulty:* {feedback_responses.get('q_difficulty', 'N/A')}/10  |  "
+            f"*Overall:* {feedback_responses.get('q_overall', 'N/A')}/10"
+        )
 
     message = {
         "blocks": [
@@ -46,7 +56,7 @@ async def notify_slack_new_submission(
                 "type": "header",
                 "text": {
                     "type": "plain_text",
-                    "text": f"New {submission_type.replace('_', ' ').title()} Submission",
+                    "text": f"New Module Feedback",
                     "emoji": True,
                 },
             },
@@ -55,8 +65,6 @@ async def notify_slack_new_submission(
                 "fields": [
                     {"type": "mrkdwn", "text": f"*Module:*\n{module_name}"},
                     {"type": "mrkdwn", "text": f"*Reviewer:*\n{reviewer_name}"},
-                    {"type": "mrkdwn", "text": f"*Clarity:* {clarity_str}"},
-                    {"type": "mrkdwn", "text": f"*Difficulty:* {difficulty_str}"},
                     {"type": "mrkdwn", "text": f"*Time Spent:*\n{time_str}"},
                     {"type": "mrkdwn", "text": f"*Email:*\n{reviewer_email}"},
                 ],
@@ -65,14 +73,14 @@ async def notify_slack_new_submission(
                 "type": "section",
                 "text": {
                     "type": "mrkdwn",
-                    "text": f"*GitHub:* <{github_link}|View Repository>",
+                    "text": f"*Ratings (1-10 scale):*\n{ratings_text}",
                 },
             },
             {
                 "type": "section",
                 "text": {
                     "type": "mrkdwn",
-                    "text": f"*Comments:*\n```{preview_comments}```",
+                    "text": f"*Additional Comments:*\n```{preview_comments}```",
                 },
             },
             {
@@ -82,11 +90,6 @@ async def notify_slack_new_submission(
                         "type": "button",
                         "text": {"type": "plain_text", "text": "View All Submissions"},
                         "url": f"{settings.APP_URL}/admin/submissions",
-                    },
-                    {
-                        "type": "button",
-                        "text": {"type": "plain_text", "text": "Open GitHub"},
-                        "url": github_link,
                     },
                 ],
             },

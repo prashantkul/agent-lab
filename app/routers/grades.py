@@ -59,8 +59,8 @@ async def request_regrade(
         raise HTTPException(status_code=403, detail="Access denied")
 
     module = submission.module
-    if not module.grading_enabled:
-        raise HTTPException(status_code=400, detail="Grading not enabled for this module")
+    if not module.github_classroom_url:
+        raise HTTPException(status_code=400, detail="GitHub Classroom not configured for this module")
 
     # Get or create grade record and set to pending
     grade = db.query(Grade).filter(Grade.submission_id == submission_id).first()

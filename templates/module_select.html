@@ -1,75 +1,267 @@
 {% extends "base.html" %}
 
-{% block title %}Select a Module - Course Review Portal{% endblock %}
+{% block title %}Select a Module - Agent Lab{% endblock %}
 
 {% block content %}
-<div class="max-w-6xl mx-auto px-4 py-8">
-    <div class="mb-8">
-        <h1 class="text-2xl font-bold text-slate-800">Select a Module to Review</h1>
-        <p class="text-slate-600 mt-2">Choose one module to test the materials and provide feedback</p>
-    </div>
-
-    <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {% for module in modules %}
-        <div class="bg-white rounded-xl shadow-md hover:shadow-xl transition-all duration-300 border border-slate-100 overflow-hidden group">
-            <!-- Status Banner -->
-            <div class="h-1.5 {% if module.visibility.value == 'active' %}bg-gradient-to-r from-blue-500 to-blue-600{% elif module.visibility.value == 'pilot_review' %}bg-gradient-to-r from-amber-500 to-amber-600{% elif module.visibility.value == 'draft' %}bg-gradient-to-r from-slate-400 to-slate-500{% else %}bg-slate-300{% endif %}"></div>
-
-            <div class="p-6">
-                <div class="flex justify-between items-start mb-3">
-                    <span class="text-xs font-semibold text-blue-600 bg-blue-50 px-2 py-1 rounded">
-                        Week {{ module.week_number }}
-                    </span>
-                    {% if module.visibility.value == 'pilot_review' %}
-                    <span class="text-xs font-medium px-2.5 py-1 rounded-full bg-amber-100 text-amber-700">
-                        Pilot Review
-                    </span>
-                    {% elif module.visibility.value == 'draft' %}
-                    <span class="text-xs font-medium px-2.5 py-1 rounded-full bg-slate-100 text-slate-600">
-                        Draft
-                    </span>
+<div class="max-w-7xl mx-auto px-4 py-8">
+    <div class="flex gap-8">
+        <!-- Left Sidebar -->
+        <div class="w-64 flex-shrink-0">
+            <!-- Legend -->
+            <div class="bg-white rounded-xl shadow-md border border-slate-100 p-5">
+                <h3 class="font-semibold text-base text-slate-800 mb-4">Module Status</h3>
+                <div class="space-y-3">
+                    <div class="flex items-center gap-3">
+                        <div class="w-4 h-4 rounded bg-gradient-to-r from-emerald-500 to-emerald-600"></div>
+                        <span class="text-sm text-slate-600">Available for Review</span>
+                    </div>
+                    {% if user.role.value == 'admin' %}
+                    <div class="flex items-center gap-3">
+                        <div class="w-4 h-4 rounded bg-gradient-to-r from-blue-500 to-blue-600"></div>
+                        <span class="text-sm text-slate-600">Draft</span>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <div class="w-4 h-4 rounded bg-gradient-to-r from-purple-500 to-purple-600"></div>
+                        <span class="text-sm text-slate-600">Active</span>
+                    </div>
                     {% endif %}
                 </div>
-
-                <h3 class="font-semibold text-lg text-slate-800 mb-2 group-hover:text-blue-700 transition-colors">
-                    {{ module.name }}
-                </h3>
-
-                {% if module.short_description %}
-                <p class="text-sm text-slate-500 mb-4 line-clamp-2">
-                    {{ module.short_description }}
-                </p>
-                {% endif %}
-
-                <!-- Module Meta -->
-                <div class="flex items-center gap-4 text-xs text-slate-500 mb-4">
-                    {% if module.estimated_time_minutes %}
-                    <span class="flex items-center gap-1">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                        </svg>
-                        {{ (module.estimated_time_minutes / 60)|int }}-{{ ((module.estimated_time_minutes / 60) + 1)|int }} hrs
-                    </span>
-                    {% endif %}
-                    <span class="flex items-center gap-1">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/>
-                        </svg>
-                        {{ module_stats[module.id].reviewer_count }}/{{ module.max_reviewers }} reviewers
-                    </span>
-                </div>
-
-                <a href="/modules/{{ module.id }}"
-                   class="block text-center text-blue-600 hover:text-blue-800 font-medium text-sm transition-colors">
-                    View Details &rarr;
-                </a>
             </div>
         </div>
-        {% else %}
-        <div class="col-span-full text-center py-12 text-slate-500">
-            No modules available at this time.
+
+        <!-- Main Content -->
+        <div class="flex-1">
+            <div class="mb-6">
+                <h1 class="text-2xl font-bold text-slate-800">Select a Module to Review</h1>
+                <p class="text-slate-600 mt-2">
+                    {% if max_modules == 2 %}
+                    You can select up to 2 modules to review
+                    {% else %}
+                    Choose a module to test the materials and provide feedback
+                    {% endif %}
+                </p>
+            </div>
+
+            <!-- Current Selections Banner -->
+            {% if user_selection_info %}
+            <div class="bg-gradient-to-r from-purple-50 to-blue-50 rounded-xl p-4 mb-6 border border-purple-100">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-3">
+                        <span class="text-sm font-medium text-slate-600">Your selected modules:</span>
+                        {% for item in user_selection_info %}
+                        <span class="inline-flex items-center gap-2 px-3 py-1.5 bg-white rounded-lg text-sm font-medium text-slate-700 border border-slate-200">
+                            Week {{ item.module.week_number }}: {{ item.module.name }}
+                            {% if item.homework_submitted %}
+                            <svg class="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                            </svg>
+                            {% else %}
+                            <span class="text-xs text-amber-600">(pending)</span>
+                            {% endif %}
+                        </span>
+                        {% endfor %}
+                    </div>
+                    <a href="/dashboard" class="text-sm text-purple-600 hover:text-purple-800 font-medium">
+                        Back to Dashboard &rarr;
+                    </a>
+                </div>
+                {% if selected_module_ids|length >= max_modules %}
+                <p class="text-xs text-slate-500 mt-2">
+                    To select a different module, click "Switch to this" on any available module below. You'll need to choose which current module to release.
+                </p>
+                {% endif %}
+            </div>
+            {% endif %}
+
+            {% for course_data in courses_with_modules %}
+            <!-- Course Section -->
+            <div class="mb-10">
+                <div class="flex items-center gap-3 mb-4">
+                    <span class="text-xs font-semibold text-purple-600 bg-purple-50 px-2 py-1 rounded">{{ course_data.course.code }}</span>
+                    <h2 class="text-xl font-bold text-slate-800">{{ course_data.course.name }}</h2>
+                </div>
+                {% if course_data.course.term %}
+                <p class="text-sm text-slate-500 mb-4">{{ course_data.course.term }}</p>
+                {% endif %}
+
+                <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-5">
+                    {% for module in course_data.modules %}
+                    <div class="bg-white rounded-xl shadow-md hover:shadow-xl transition-all duration-300 border border-slate-100 overflow-hidden group">
+                        <!-- Status Banner - Green for pilot_review, Blue for draft, Purple for active -->
+                        <div class="h-1.5 {% if module.visibility.value == 'pilot_review' %}bg-gradient-to-r from-emerald-500 to-emerald-600{% elif module.visibility.value == 'draft' %}bg-gradient-to-r from-blue-500 to-blue-600{% elif module.visibility.value == 'active' %}bg-gradient-to-r from-purple-500 to-purple-600{% else %}bg-slate-300{% endif %}"></div>
+
+                        <div class="p-5">
+                            <div class="flex justify-between items-start mb-3">
+                                <span class="text-xs font-semibold text-blue-600 bg-blue-50 px-2 py-1 rounded">
+                                    Week {{ module.week_number }}
+                                </span>
+                                {% if module.visibility.value == 'pilot_review' %}
+                                <span class="text-xs font-medium px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-700">
+                                    Available
+                                </span>
+                                {% elif module.visibility.value == 'draft' %}
+                                <span class="text-xs font-medium px-2.5 py-1 rounded-full bg-blue-100 text-blue-700">
+                                    Draft
+                                </span>
+                                {% elif module.visibility.value == 'active' %}
+                                <span class="text-xs font-medium px-2.5 py-1 rounded-full bg-purple-100 text-purple-700">
+                                    Active
+                                </span>
+                                {% endif %}
+                            </div>
+
+                            <h3 class="font-semibold text-base text-slate-800 mb-2 group-hover:text-blue-700 transition-colors line-clamp-2">
+                                {{ module.name }}
+                            </h3>
+
+                            {% if module.short_description %}
+                            <p class="text-sm text-slate-500 mb-4 line-clamp-2">
+                                {{ module.short_description }}
+                            </p>
+                            {% endif %}
+
+                            <!-- Module Meta -->
+                            <div class="flex items-center gap-4 text-xs text-slate-500 mb-4">
+                                {% if module.estimated_time_minutes %}
+                                <span class="flex items-center gap-1">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                    </svg>
+                                    {{ (module.estimated_time_minutes / 60)|int }}-{{ ((module.estimated_time_minutes / 60) + 1)|int }} hrs
+                                </span>
+                                {% endif %}
+                                <span class="flex items-center gap-1 {% if module_stats[module.id].reviewer_count >= module.max_reviewers %}text-red-500{% endif %}">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/>
+                                    </svg>
+                                    {{ module_stats[module.id].reviewer_count }}/{{ module.max_reviewers }}
+                                    {% if module_stats[module.id].reviewer_count >= module.max_reviewers %}
+                                    <span class="text-red-500 font-medium">(Full)</span>
+                                    {% endif %}
+                                </span>
+                            </div>
+
+                            {% if module.id in selected_module_ids %}
+                            <span class="block text-center text-purple-600 font-medium text-sm">
+                                <svg class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                                </svg>
+                                Selected
+                            </span>
+                            {% elif module_stats[module.id].reviewer_count >= module.max_reviewers %}
+                            <span class="block text-center text-slate-400 font-medium text-sm">
+                                Module Full
+                            </span>
+                            {% elif selected_module_ids|length >= max_modules %}
+                            <a href="/modules/{{ module.id }}/swap"
+                               class="block text-center text-amber-600 hover:text-amber-800 font-medium text-sm transition-colors">
+                                Switch to this &rarr;
+                            </a>
+                            {% else %}
+                            <a href="/modules/{{ module.id }}"
+                               class="block text-center text-blue-600 hover:text-blue-800 font-medium text-sm transition-colors">
+                                View Details &rarr;
+                            </a>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endfor %}
+
+            {% if modules_without_course %}
+            <!-- Modules without course -->
+            <div class="mb-10">
+                <h2 class="text-xl font-bold text-slate-800 mb-4">Other Modules</h2>
+                <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-5">
+                    {% for module in modules_without_course %}
+                    <div class="bg-white rounded-xl shadow-md hover:shadow-xl transition-all duration-300 border border-slate-100 overflow-hidden group">
+                        <!-- Status Banner -->
+                        <div class="h-1.5 {% if module.visibility.value == 'pilot_review' %}bg-gradient-to-r from-emerald-500 to-emerald-600{% elif module.visibility.value == 'draft' %}bg-gradient-to-r from-blue-500 to-blue-600{% elif module.visibility.value == 'active' %}bg-gradient-to-r from-purple-500 to-purple-600{% else %}bg-slate-300{% endif %}"></div>
+
+                        <div class="p-5">
+                            <div class="flex justify-between items-start mb-3">
+                                <span class="text-xs font-semibold text-blue-600 bg-blue-50 px-2 py-1 rounded">
+                                    Week {{ module.week_number }}
+                                </span>
+                                {% if module.visibility.value == 'pilot_review' %}
+                                <span class="text-xs font-medium px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-700">
+                                    Available
+                                </span>
+                                {% elif module.visibility.value == 'draft' %}
+                                <span class="text-xs font-medium px-2.5 py-1 rounded-full bg-blue-100 text-blue-700">
+                                    Draft
+                                </span>
+                                {% endif %}
+                            </div>
+
+                            <h3 class="font-semibold text-base text-slate-800 mb-2 group-hover:text-blue-700 transition-colors line-clamp-2">
+                                {{ module.name }}
+                            </h3>
+
+                            {% if module.short_description %}
+                            <p class="text-sm text-slate-500 mb-4 line-clamp-2">
+                                {{ module.short_description }}
+                            </p>
+                            {% endif %}
+
+                            <!-- Module Meta -->
+                            <div class="flex items-center gap-4 text-xs text-slate-500 mb-4">
+                                {% if module.estimated_time_minutes %}
+                                <span class="flex items-center gap-1">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                    </svg>
+                                    {{ (module.estimated_time_minutes / 60)|int }}-{{ ((module.estimated_time_minutes / 60) + 1)|int }} hrs
+                                </span>
+                                {% endif %}
+                                <span class="flex items-center gap-1 {% if module_stats[module.id].reviewer_count >= module.max_reviewers %}text-red-500{% endif %}">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/>
+                                    </svg>
+                                    {{ module_stats[module.id].reviewer_count }}/{{ module.max_reviewers }}
+                                    {% if module_stats[module.id].reviewer_count >= module.max_reviewers %}
+                                    <span class="text-red-500 font-medium">(Full)</span>
+                                    {% endif %}
+                                </span>
+                            </div>
+
+                            {% if module.id in selected_module_ids %}
+                            <span class="block text-center text-purple-600 font-medium text-sm">
+                                <svg class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                                </svg>
+                                Selected
+                            </span>
+                            {% elif module_stats[module.id].reviewer_count >= module.max_reviewers %}
+                            <span class="block text-center text-slate-400 font-medium text-sm">
+                                Module Full
+                            </span>
+                            {% elif selected_module_ids|length >= max_modules %}
+                            <a href="/modules/{{ module.id }}/swap"
+                               class="block text-center text-amber-600 hover:text-amber-800 font-medium text-sm transition-colors">
+                                Switch to this &rarr;
+                            </a>
+                            {% else %}
+                            <a href="/modules/{{ module.id }}"
+                               class="block text-center text-blue-600 hover:text-blue-800 font-medium text-sm transition-colors">
+                                View Details &rarr;
+                            </a>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+
+            {% if not courses_with_modules and not modules_without_course %}
+            <div class="text-center py-12 text-slate-500">
+                No modules available at this time.
+            </div>
+            {% endif %}
         </div>
-        {% endfor %}
     </div>
 </div>
 {% endblock %}

@@ -29,7 +29,7 @@ def get_users_with_pending_work(db: Session) -> list:
     # Get all users with selected modules
     users = db.query(User).filter(
         User.selected_module_id.isnot(None),
-        User.role.in_([UserRole.REVIEWER, UserRole.STUDENT]),
+        User.role.in_([UserRole.reviewer, UserRole.student]),
     ).all()
 
     for user in users:

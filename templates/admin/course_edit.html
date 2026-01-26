@@ -1,0 +1,79 @@
+{% extends "admin/base.html" %}
+
+{% block title %}{% if is_new %}New Course{% else %}Edit Course{% endif %} - Admin{% endblock %}
+
+{% block admin_content %}
+<div class="max-w-3xl">
+    <div class="mb-6">
+        <a href="/admin/courses" class="text-purple-600 hover:text-purple-800 text-base flex items-center gap-1">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+            </svg>
+            Back to Courses
+        </a>
+    </div>
+
+    <div class="bg-white rounded-2xl shadow-lg overflow-hidden">
+        <div class="gradient-header px-6 py-4">
+            <h1 class="text-xl font-semibold text-white">{% if is_new %}Create New Course{% else %}Edit Course{% endif %}</h1>
+        </div>
+
+        <form action="{% if is_new %}/admin/courses{% else %}/admin/courses/{{ course.id }}{% endif %}" method="post" class="p-6 space-y-6">
+            <div class="grid md:grid-cols-2 gap-6">
+                <div class="md:col-span-2">
+                    <label class="block text-base font-medium text-gray-700 mb-2">Course Name *</label>
+                    <input type="text" name="name" value="{{ course.name if course else '' }}" required
+                           class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 font-mono text-base">
+                </div>
+
+                <div>
+                    <label class="block text-base font-medium text-gray-700 mb-2">Course Code *</label>
+                    <input type="text" name="code" value="{{ course.code if course else '' }}" required placeholder="e.g., AI-AGENTS-101"
+                           class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 font-mono text-base">
+                </div>
+
+                <div>
+                    <label class="block text-base font-medium text-gray-700 mb-2">Term</label>
+                    <input type="text" name="term" value="{{ course.term if course else '' }}" placeholder="e.g., Spring 2026"
+                           class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 font-mono text-base">
+                </div>
+
+                <div class="md:col-span-2">
+                    <label class="block text-base font-medium text-gray-700 mb-2">Description</label>
+                    <textarea name="description" rows="3"
+                              class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 font-mono text-base">{{ course.description if course else '' }}</textarea>
+                </div>
+
+                <div>
+                    <label class="block text-base font-medium text-gray-700 mb-2">Instructor Name</label>
+                    <input type="text" name="instructor_name" value="{{ course.instructor_name if course else '' }}"
+                           class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 font-mono text-base">
+                </div>
+
+                <div>
+                    <label class="block text-base font-medium text-gray-700 mb-2">Instructor Email</label>
+                    <input type="email" name="instructor_email" value="{{ course.instructor_email if course else '' }}"
+                           class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 font-mono text-base">
+                </div>
+
+                <div class="md:col-span-2">
+                    <label class="flex items-center gap-3">
+                        <input type="checkbox" name="is_active" {% if not course or course.is_active %}checked{% endif %}
+                               class="h-5 w-5 text-purple-600 rounded border-gray-300 focus:ring-purple-500">
+                        <span class="text-base font-medium text-gray-700">Course is active</span>
+                    </label>
+                </div>
+            </div>
+
+            <div class="flex justify-end gap-3 pt-4 border-t border-gray-200">
+                <a href="/admin/courses" class="px-6 py-2.5 rounded-xl font-medium text-gray-600 hover:bg-gray-100 transition-colors text-base">
+                    Cancel
+                </a>
+                <button type="submit" class="gradient-button text-white px-6 py-2.5 rounded-xl font-medium hover:shadow-lg transition-all duration-200 text-base">
+                    {% if is_new %}Create Course{% else %}Save Changes{% endif %}
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

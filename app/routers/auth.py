@@ -2,16 +2,18 @@
 from datetime import datetime
 
 from fastapi import APIRouter, Depends, HTTPException, Request
-from fastapi.responses import RedirectResponse
+from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
 
 from app.auth import get_google_oauth
 from app.config import settings
 from app.database import get_db
-from app.dependencies import is_admin_email
+from app.dependencies import is_admin_email, require_user
 from app.models import User, UserRole
 
 router = APIRouter(prefix="/auth", tags=["auth"])
+templates = Jinja2Templates(directory="templates")
 
 
 @router.get("/google")
@@ -43,7 +45,7 @@ async def google_callback(request: Request, db: Session = Depends(get_db)):
 
         if not user:
             # Determine role based on email
-            role = UserRole.ADMIN if is_admin_email(email) else UserRole.REVIEWER
+            role = UserRole.admin if is_admin_email(email) else UserRole.reviewer
 
             user = User(
                 google_id=google_id,
@@ -65,7 +67,11 @@ async def google_callback(request: Request, db: Session = Depends(get_db)):
         # Set session
         request.session["user_id"] = user.id
 
-        return RedirectResponse(url="/dashboard", status_code=303)
+        # Redirect to confidentiality agreement if not accepted (except admins)
+        if not user.accepted_terms_at and user.role != UserRole.admin:
+            return RedirectResponse(url="/confidentiality", status_code=303)
+
+        return RedirectResponse(url="/home", status_code=303)
 
     except Exception as e:
         print(f"OAuth error: {e}")

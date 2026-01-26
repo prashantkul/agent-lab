@@ -18,11 +18,8 @@ class ModuleBase(BaseModel):
     expected_outcomes: Optional[str] = None
     estimated_time_minutes: Optional[int] = None
     drive_file_id: str
-    starter_repo_url: Optional[str] = None
     instructions: Optional[str] = None
     homework_instructions: Optional[str] = None
-    grading_enabled: bool = True
-    grading_script_url: Optional[str] = None
     grading_criteria: Optional[str] = None
     max_points: int = 100
     max_reviewers: int = 10
@@ -48,11 +45,8 @@ class ModuleUpdate(BaseModel):
     expected_outcomes: Optional[str] = None
     estimated_time_minutes: Optional[int] = None
     drive_file_id: Optional[str] = None
-    starter_repo_url: Optional[str] = None
     instructions: Optional[str] = None
     homework_instructions: Optional[str] = None
-    grading_enabled: Optional[bool] = None
-    grading_script_url: Optional[str] = None
     grading_criteria: Optional[str] = None
     max_points: Optional[int] = None
     max_reviewers: Optional[int] = None

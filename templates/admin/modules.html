@@ -4,88 +4,256 @@
 
 {% block admin_content %}
 <div class="flex justify-between items-center mb-6">
-    <h1 class="text-2xl font-bold text-slate-800">Manage Modules</h1>
-    <a href="/admin/modules/new" class="inline-flex items-center gap-2 gradient-button text-white px-4 py-2 rounded-lg">
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
-        </svg>
-        New Module
-    </a>
+    <h1 class="text-2xl font-bold text-gray-800">All Modules</h1>
+    <div class="flex items-center gap-3">
+        <a href="/admin/modules/import" class="inline-flex items-center gap-2 bg-white border border-gray-200 text-gray-700 px-4 py-2 rounded-xl hover:bg-gray-50 transition-colors text-base font-medium shadow-sm">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/>
+            </svg>
+            Import from PDF
+        </a>
+        <a href="/admin/modules/new" class="inline-flex items-center gap-2 gradient-button text-white px-4 py-2 rounded-xl text-base font-medium shadow-lg">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+            </svg>
+            New Module
+        </a>
+    </div>
 </div>
 
 {% if request.query_params.get('updated') %}
-<div class="bg-emerald-50 border border-emerald-200 text-emerald-800 px-4 py-3 rounded-lg mb-6">
+<div class="bg-emerald-50 border border-emerald-200 text-emerald-700 px-4 py-3 rounded-xl mb-6 text-base">
     PDF updated! Notified {{ request.query_params.get('notified', 0) }} user(s).
 </div>
 {% endif %}
 
 {% if request.query_params.get('no_update') %}
-<div class="bg-blue-50 border border-blue-200 text-blue-800 px-4 py-3 rounded-lg mb-6">
+<div class="bg-purple-50 border border-purple-200 text-purple-700 px-4 py-3 rounded-xl mb-6 text-base">
     No updates found for this module's PDF.
 </div>
 {% endif %}
 
-<div class="bg-white rounded-xl shadow-md overflow-hidden">
-    <table class="w-full">
-        <thead class="bg-slate-50">
-            <tr>
-                <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase">Module</th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase">Visibility</th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase">Reviewers</th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase">Submissions</th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase">Actions</th>
-            </tr>
-        </thead>
-        <tbody class="divide-y divide-slate-100">
-            {% for module in modules %}
-            <tr class="hover:bg-slate-50">
-                <td class="px-6 py-4">
-                    <div class="flex items-center gap-3">
-                        <span class="text-xs font-semibold text-blue-600 bg-blue-50 px-2 py-1 rounded">
-                            Week {{ module.week_number }}
-                        </span>
-                        <span class="text-sm font-medium text-slate-900">{{ module.name }}</span>
-                    </div>
-                </td>
-                <td class="px-6 py-4">
-                    <span class="text-xs font-medium px-2.5 py-1 rounded-full
-                        {% if module.visibility.value == 'active' %}bg-emerald-100 text-emerald-700
-                        {% elif module.visibility.value == 'pilot_review' %}bg-amber-100 text-amber-700
-                        {% elif module.visibility.value == 'draft' %}bg-slate-100 text-slate-600
-                        {% else %}bg-red-100 text-red-700{% endif %}">
-                        {{ module.visibility.value|replace('_', ' ')|title }}
-                    </span>
-                </td>
-                <td class="px-6 py-4 text-sm text-slate-600">
-                    {{ module_stats[module.id].reviewer_count }}/{{ module.max_reviewers }}
-                </td>
-                <td class="px-6 py-4 text-sm text-slate-600">
-                    {{ module_stats[module.id].submission_count }}
-                </td>
-                <td class="px-6 py-4">
-                    <div class="flex items-center gap-2">
-                        <a href="/admin/modules/{{ module.id }}/edit" class="text-blue-600 hover:text-blue-800 text-sm">
-                            Edit
-                        </a>
-                        <form action="/admin/modules/{{ module.id }}/check-update" method="post" class="inline">
-                            <button type="submit" class="text-slate-500 hover:text-blue-600 text-sm">
-                                Check PDF
-                            </button>
-                        </form>
-                        <form action="/admin/modules/{{ module.id }}/grade-all" method="post" class="inline">
-                            <button type="submit" class="text-emerald-600 hover:text-emerald-800 text-sm">
-                                Grade All
-                            </button>
-                        </form>
-                    </div>
-                </td>
-            </tr>
-            {% else %}
-            <tr>
-                <td colspan="5" class="px-6 py-8 text-center text-slate-500">No modules yet</td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+{% if request.query_params.get('deleted') %}
+<div class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl mb-6 text-base">
+    Module permanently deleted.
 </div>
+{% endif %}
+
+<!-- Courses with Modules -->
+{% for course_data in courses_with_modules %}
+<div class="bg-white rounded-2xl shadow-lg overflow-hidden mb-6">
+    <!-- Course Header (Expandable) -->
+    <button onclick="toggleCourse('course-{{ course_data.course.id }}')" class="w-full px-6 py-4 bg-gradient-to-r from-blue-50 to-purple-50 hover:from-blue-100 hover:to-purple-100 transition-colors flex items-center justify-between border-l-4 border-purple-500">
+        <div class="flex items-center gap-3">
+            <svg id="chevron-{{ course_data.course.id }}" class="w-5 h-5 text-purple-500 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+            </svg>
+            <span class="text-xs font-bold text-white bg-purple-600 px-2.5 py-1 rounded">{{ course_data.course.code }}</span>
+            <h2 class="text-lg font-bold text-purple-700">{{ course_data.course.name }}</h2>
+            <span class="text-sm text-purple-400 font-medium">({{ course_data.modules|length }} modules)</span>
+        </div>
+        {% if course_data.course.term %}
+        <span class="text-sm font-medium text-purple-500 bg-purple-100 px-3 py-1 rounded-full">{{ course_data.course.term }}</span>
+        {% endif %}
+    </button>
+
+    <!-- Modules Table (Collapsible) -->
+    <div id="course-{{ course_data.course.id }}" class="course-content">
+        <table class="w-full">
+            <thead class="bg-gray-50 border-t border-gray-100">
+                <tr>
+                    <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Module</th>
+                    <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Visibility</th>
+                    <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Reviewers</th>
+                    <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Submissions</th>
+                    <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Actions</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-100">
+                {% for module in course_data.modules %}
+                <tr class="hover:bg-gray-50 transition-colors">
+                    <td class="px-6 py-4">
+                        <div class="flex items-center gap-3">
+                            <span class="text-xs font-semibold text-purple-600 bg-purple-50 px-3 py-1.5 rounded-lg">
+                                Week {{ module.week_number }}
+                            </span>
+                            <span class="text-base font-medium text-gray-900">{{ module.name }}</span>
+                        </div>
+                    </td>
+                    <td class="px-6 py-4">
+                        <span class="text-xs font-medium px-3 py-1.5 rounded-full
+                            {% if module.visibility.value == 'active' %}bg-purple-100 text-purple-700
+                            {% elif module.visibility.value == 'pilot_review' %}bg-emerald-100 text-emerald-700
+                            {% elif module.visibility.value == 'draft' %}bg-blue-100 text-blue-700
+                            {% else %}bg-red-100 text-red-700{% endif %}">
+                            {% if module.visibility.value == 'pilot_review' %}Available{% else %}{{ module.visibility.value|replace('_', ' ')|title }}{% endif %}
+                        </span>
+                    </td>
+                    <td class="px-6 py-4 text-base text-gray-600">
+                        {{ module_stats[module.id].reviewer_count }}/{{ module.max_reviewers }}
+                    </td>
+                    <td class="px-6 py-4 text-base text-gray-600">
+                        {{ module_stats[module.id].submission_count }}
+                    </td>
+                    <td class="px-6 py-4">
+                        <div class="flex items-center gap-3">
+                            <a href="/admin/modules/{{ module.id }}/edit" class="text-purple-600 hover:text-purple-800 text-base font-medium">
+                                Edit
+                            </a>
+                            <form action="/admin/modules/{{ module.id }}/grade-all" method="post" class="inline">
+                                <button type="submit" class="text-emerald-600 hover:text-emerald-700 text-base font-medium">
+                                    Grade All
+                                </button>
+                            </form>
+                            <button type="button" onclick="confirmDelete({{ module.id }}, '{{ module.name }}')" class="text-red-500 hover:text-red-700 text-base font-medium">
+                                Delete
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endfor %}
+
+<!-- Modules without Course -->
+{% if modules_without_course %}
+<div class="bg-white rounded-2xl shadow-lg overflow-hidden mb-6">
+    <button onclick="toggleCourse('course-uncategorized')" class="w-full px-6 py-4 bg-gradient-to-r from-gray-50 to-slate-50 hover:from-gray-100 hover:to-slate-100 transition-colors flex items-center justify-between border-l-4 border-gray-400">
+        <div class="flex items-center gap-3">
+            <svg id="chevron-uncategorized" class="w-5 h-5 text-gray-500 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+            </svg>
+            <span class="text-xs font-bold text-white bg-gray-500 px-2.5 py-1 rounded">N/A</span>
+            <h2 class="text-lg font-bold text-gray-600">Uncategorized Modules</h2>
+            <span class="text-sm text-gray-400 font-medium">({{ modules_without_course|length }} modules)</span>
+        </div>
+    </button>
+
+    <div id="course-uncategorized" class="course-content">
+        <table class="w-full">
+            <thead class="bg-gray-50 border-t border-gray-100">
+                <tr>
+                    <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Module</th>
+                    <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Visibility</th>
+                    <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Reviewers</th>
+                    <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Submissions</th>
+                    <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Actions</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-100">
+                {% for module in modules_without_course %}
+                <tr class="hover:bg-gray-50 transition-colors">
+                    <td class="px-6 py-4">
+                        <div class="flex items-center gap-3">
+                            <span class="text-xs font-semibold text-purple-600 bg-purple-50 px-3 py-1.5 rounded-lg">
+                                Week {{ module.week_number }}
+                            </span>
+                            <span class="text-base font-medium text-gray-900">{{ module.name }}</span>
+                        </div>
+                    </td>
+                    <td class="px-6 py-4">
+                        <span class="text-xs font-medium px-3 py-1.5 rounded-full
+                            {% if module.visibility.value == 'active' %}bg-purple-100 text-purple-700
+                            {% elif module.visibility.value == 'pilot_review' %}bg-emerald-100 text-emerald-700
+                            {% elif module.visibility.value == 'draft' %}bg-blue-100 text-blue-700
+                            {% else %}bg-red-100 text-red-700{% endif %}">
+                            {% if module.visibility.value == 'pilot_review' %}Available{% else %}{{ module.visibility.value|replace('_', ' ')|title }}{% endif %}
+                        </span>
+                    </td>
+                    <td class="px-6 py-4 text-base text-gray-600">
+                        {{ module_stats[module.id].reviewer_count }}/{{ module.max_reviewers }}
+                    </td>
+                    <td class="px-6 py-4 text-base text-gray-600">
+                        {{ module_stats[module.id].submission_count }}
+                    </td>
+                    <td class="px-6 py-4">
+                        <div class="flex items-center gap-3">
+                            <a href="/admin/modules/{{ module.id }}/edit" class="text-purple-600 hover:text-purple-800 text-base font-medium">
+                                Edit
+                            </a>
+                            <form action="/admin/modules/{{ module.id }}/grade-all" method="post" class="inline">
+                                <button type="submit" class="text-emerald-600 hover:text-emerald-700 text-base font-medium">
+                                    Grade All
+                                </button>
+                            </form>
+                            <button type="button" onclick="confirmDelete({{ module.id }}, '{{ module.name }}')" class="text-red-500 hover:text-red-700 text-base font-medium">
+                                Delete
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endif %}
+
+{% if not courses_with_modules and not modules_without_course %}
+<div class="bg-white rounded-2xl shadow-lg p-8 text-center text-gray-400 text-base">
+    No modules yet. Create a course first, then add modules.
+</div>
+{% endif %}
+
+<!-- Delete Confirmation Modal -->
+<div id="deleteModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm hidden items-center justify-center z-50">
+    <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full mx-4 overflow-hidden">
+        <div class="bg-gradient-to-r from-red-500 to-red-600 px-6 py-4">
+            <h3 class="text-lg font-semibold text-white">Delete Module</h3>
+        </div>
+        <div class="p-6">
+            <p class="text-gray-600 mb-2 text-base">Are you sure you want to permanently delete:</p>
+            <p class="font-semibold text-gray-800 mb-4" id="deleteModuleName"></p>
+            <p class="text-base text-red-600 mb-6">This will also delete all submissions and grades for this module. This action cannot be undone.</p>
+            <div class="flex gap-3 justify-end">
+                <button onclick="closeDeleteModal()" class="px-4 py-2 rounded-xl text-gray-600 hover:bg-gray-100 transition-colors text-base font-medium">
+                    Cancel
+                </button>
+                <form id="deleteForm" method="post" class="inline">
+                    <button type="submit" class="px-4 py-2 rounded-xl bg-red-500 text-white hover:bg-red-600 transition-colors text-base font-medium">
+                        Delete Permanently
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function toggleCourse(courseId) {
+    const content = document.getElementById(courseId);
+    const chevronId = courseId.replace('course-', 'chevron-');
+    const chevron = document.getElementById(chevronId);
+
+    if (content.classList.contains('hidden')) {
+        content.classList.remove('hidden');
+        chevron.style.transform = 'rotate(0deg)';
+    } else {
+        content.classList.add('hidden');
+        chevron.style.transform = 'rotate(-90deg)';
+    }
+}
+
+function confirmDelete(moduleId, moduleName) {
+    document.getElementById('deleteModuleName').textContent = moduleName;
+    document.getElementById('deleteForm').action = '/admin/modules/' + moduleId + '/delete';
+    document.getElementById('deleteModal').classList.remove('hidden');
+    document.getElementById('deleteModal').classList.add('flex');
+}
+
+function closeDeleteModal() {
+    document.getElementById('deleteModal').classList.add('hidden');
+    document.getElementById('deleteModal').classList.remove('flex');
+}
+
+// Close modal on background click
+document.getElementById('deleteModal').addEventListener('click', function(e) {
+    if (e.target === this) {
+        closeDeleteModal();
+    }
+});
+</script>
 {% endblock %}

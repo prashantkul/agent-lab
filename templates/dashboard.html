@@ -3,188 +3,352 @@
 {% block title %}Dashboard - {{ module.name }}{% endblock %}
 
 {% block content %}
-<div class="max-w-6xl mx-auto px-4 py-8">
-    <!-- Header -->
-    <div class="flex justify-between items-start mb-6">
-        <div>
-            <span class="text-sm text-blue-600 font-semibold">Week {{ module.week_number }}</span>
-            <h1 class="text-2xl font-bold text-slate-800">{{ module.name }}</h1>
+<div class="mx-auto px-6 py-6" style="max-width: 1380px;">
+    <!-- Module Switcher (if multiple modules selected) -->
+    {% if selected_modules and selected_modules|length > 1 %}
+    <div class="bg-white rounded-xl shadow-md p-3 mb-4 flex items-center gap-3">
+        <span class="text-sm text-gray-500 font-medium">Your Modules:</span>
+        <div class="flex gap-2 flex-1">
+            {% for item in selected_modules %}
+            {% if item.is_active %}
+            <span class="inline-flex items-center gap-2 px-4 py-2 bg-purple-100 text-purple-700 rounded-lg text-sm font-medium border-2 border-purple-300">
+                <span class="w-2 h-2 bg-purple-500 rounded-full"></span>
+                Week {{ item.module.week_number }}: {{ item.module.name }}
+                {% if item.homework_submitted %}
+                <svg class="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                </svg>
+                {% endif %}
+            </span>
+            {% else %}
+            <form action="/modules/{{ item.module.id }}/switch" method="post" class="inline">
+                <button type="submit" class="inline-flex items-center gap-2 px-4 py-2 bg-gray-100 text-gray-600 rounded-lg text-sm font-medium hover:bg-gray-200 transition-colors border border-gray-200">
+                    Week {{ item.module.week_number }}: {{ item.module.name }}
+                    {% if item.homework_submitted %}
+                    <svg class="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                    </svg>
+                    {% endif %}
+                </button>
+            </form>
+            {% endif %}
+            {% endfor %}
         </div>
-        <form action="/modules/{{ module.id }}/release" method="post" onsubmit="return confirm('Are you sure you want to release this module?');">
-            <button type="submit" class="text-sm text-slate-500 hover:text-red-600 transition-colors">
-                Release Module
-            </button>
-        </form>
+        {% if can_select_more %}
+        <a href="/modules" class="inline-flex items-center gap-1 text-sm text-blue-600 hover:text-blue-800">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+            </svg>
+            Add Module
+        </a>
+        {% endif %}
+    </div>
+    {% endif %}
+
+    <!-- Header -->
+    <div class="bg-gradient-to-r from-purple-50 to-blue-50 rounded-xl shadow-md p-4 mb-6 border border-purple-100/50">
+        <div class="flex items-center justify-between">
+            <div class="flex items-center gap-4">
+                <a href="/home" class="inline-flex items-center gap-2 px-3 py-1.5 text-slate-500 hover:text-slate-700 hover:bg-white/50 rounded-lg transition-colors text-sm font-medium">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+                    </svg>
+                    Home
+                </a>
+                <div class="border-l border-purple-200 pl-4">
+                    <span class="text-sm text-purple-600 font-semibold">Week {{ module.week_number }}</span>
+                    <h1 class="text-xl font-bold text-gray-800">{{ module.name }}</h1>
+                </div>
+            </div>
+            <div class="flex items-center gap-3">
+                <a href="/help/reviewer" class="inline-flex items-center gap-2 px-3 py-2 text-gray-400 hover:text-purple-600 hover:bg-white/50 rounded-lg transition-colors text-sm font-medium">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                    Help
+                </a>
+                {% if can_select_more and (not selected_modules or selected_modules|length < 2) %}
+                <a href="/modules" class="inline-flex items-center gap-2 px-4 py-2 bg-white text-blue-600 rounded-lg hover:bg-blue-50 transition-colors text-sm font-medium border border-blue-200">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                    </svg>
+                    Add 2nd Module
+                </a>
+                {% endif %}
+                <form action="/modules/{{ module.id }}/release" method="post" onsubmit="return confirmRelease()">
+                    <button type="submit" class="inline-flex items-center gap-2 px-3 py-2 text-gray-400 hover:text-red-600 hover:bg-white/50 rounded-lg transition-colors text-sm font-medium">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
+                        </svg>
+                        Release
+                    </button>
+                </form>
+            </div>
+        </div>
     </div>
 
     <!-- PDF Update Banner -->
     {% if pdf_updated %}
-    <div class="bg-amber-50 border border-amber-200 text-amber-800 px-4 py-3 rounded-lg mb-6 flex items-center gap-3">
-        <svg class="w-5 h-5 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <div class="bg-amber-50 border border-amber-200 text-amber-700 px-4 py-3 rounded-xl mb-6 flex items-center gap-3 text-base">
+        <svg class="w-5 h-5 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
         </svg>
         <span class="font-medium">PDF Updated!</span>
-        <span class="text-amber-700">Download the latest version before completing your review.</span>
+        <span>Download the latest version before completing your review.</span>
     </div>
     {% endif %}
 
-    <!-- Materials Section -->
-    <div class="bg-white rounded-xl shadow-md p-6 mb-6">
-        <h2 class="text-lg font-semibold text-slate-800 mb-4 flex items-center gap-2">
-            <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-            </svg>
-            Materials
-        </h2>
-
-        <div class="flex gap-4 mb-6">
-            <a href="/modules/{{ module.id }}/pdf" target="_blank"
-               class="inline-flex items-center gap-2 bg-blue-50 text-blue-700 px-4 py-2 rounded-lg hover:bg-blue-100 transition-colors">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
-                </svg>
-                View PDF
-            </a>
-            <a href="/modules/{{ module.id }}/pdf/download"
-               class="inline-flex items-center gap-2 gradient-button text-white px-4 py-2 rounded-lg">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
-                </svg>
-                Download PDF
-            </a>
-            {% if module.starter_repo_url %}
-            <a href="{{ module.starter_repo_url }}" target="_blank"
-               class="inline-flex items-center gap-2 bg-slate-100 text-slate-700 px-4 py-2 rounded-lg hover:bg-slate-200 transition-colors">
-                <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
-                </svg>
-                Starter Repo
-            </a>
-            {% endif %}
-        </div>
-
-        <!-- PDF Viewer -->
-        <div class="border border-slate-200 rounded-lg overflow-hidden" style="height: 600px;">
-            <iframe src="/modules/{{ module.id }}/pdf" class="w-full h-full" frameborder="0"></iframe>
-        </div>
-    </div>
-
-    <!-- Submission Cards -->
-    <div class="grid md:grid-cols-2 gap-6">
-        <!-- In-Class Exercise -->
-        <div class="bg-white rounded-xl shadow-md overflow-hidden">
-            <div class="h-1.5 {% if submission_status.in_class.status == 'graded' %}bg-emerald-500{% elif submission_status.in_class.status == 'submitted' %}bg-blue-500{% elif submission_status.in_class.status == 'grading' %}bg-purple-500{% else %}bg-slate-300{% endif %}"></div>
-            <div class="p-6">
-                <div class="flex justify-between items-start mb-4">
-                    <h3 class="text-lg font-semibold text-slate-800">In-Class Exercise</h3>
-                    {% if submission_status.in_class.status == 'graded' %}
-                    <span class="inline-flex items-center gap-1 text-xs font-medium px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-700">
-                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
-                        Graded: {{ submission_status.in_class.grade.total_points }}/{{ submission_status.in_class.grade.max_points }}
-                    </span>
-                    {% elif submission_status.in_class.status == 'grading' %}
-                    <span class="inline-flex items-center gap-1 text-xs font-medium px-2.5 py-1 rounded-full bg-purple-100 text-purple-700">
-                        <span class="w-1.5 h-1.5 rounded-full bg-purple-500 animate-pulse"></span>
-                        Grading...
-                    </span>
-                    {% elif submission_status.in_class.status == 'submitted' %}
-                    <span class="inline-flex items-center gap-1 text-xs font-medium px-2.5 py-1 rounded-full bg-blue-100 text-blue-700">
-                        <span class="w-1.5 h-1.5 rounded-full bg-blue-500"></span>
-                        Submitted
-                    </span>
-                    {% else %}
-                    <span class="inline-flex items-center gap-1 text-xs font-medium px-2.5 py-1 rounded-full bg-slate-100 text-slate-600">
-                        <span class="w-1.5 h-1.5 rounded-full bg-slate-400"></span>
-                        Not Started
-                    </span>
-                    {% endif %}
-                </div>
-
-                {% if module.instructions %}
-                <div class="text-sm text-slate-600 mb-4 line-clamp-3">
-                    {{ module.instructions[:200] }}{% if module.instructions|length > 200 %}...{% endif %}
-                </div>
-                {% endif %}
-
-                {% if submission_status.in_class.submitted %}
-                <div class="text-sm text-slate-500 mb-4">
-                    <span class="font-medium">Submitted:</span>
-                    {{ submission_status.in_class.submission.submitted_at.strftime('%b %d, %Y at %I:%M %p') }}
-                </div>
-                {% endif %}
-
-                <div class="flex gap-2">
-                    {% if submission_status.in_class.grade and submission_status.in_class.grade.status == 'completed' %}
-                    <a href="/submissions/{{ submission_status.in_class.submission.id }}/grade"
-                       class="flex-1 text-center gradient-button text-white px-4 py-2 rounded-lg">
-                        View Grade
-                    </a>
-                    {% endif %}
-                    <a href="/submit/in_class"
-                       class="flex-1 text-center {% if submission_status.in_class.submitted %}bg-slate-100 text-slate-700 hover:bg-slate-200{% else %}gradient-button text-white{% endif %} px-4 py-2 rounded-lg transition-colors">
-                        {% if submission_status.in_class.submitted %}Update{% else %}Submit{% endif %}
+    <div class="flex gap-8">
+        <!-- Left Sidebar - Submissions -->
+        <div class="w-72 flex-shrink-0 space-y-4 bg-purple-50/50 rounded-2xl p-4">
+            <!-- Reviewer Tasks -->
+            <div class="bg-white rounded-xl shadow-md overflow-hidden">
+                <div class="h-1 bg-gradient-to-r from-purple-500 to-blue-500"></div>
+                <div class="p-4">
+                    <h3 class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">Your Tasks</h3>
+                    <a href="/submit/homework"
+                       class="flex items-center gap-3 w-full gradient-button text-white px-4 py-3 rounded-lg hover:shadow-lg transition-all text-sm font-semibold">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                        </svg>
+                        {% if submission_status.homework.submitted %}Update Module Feedback{% else %}Submit Module Feedback{% endif %}
                     </a>
                 </div>
             </div>
+
+            <!-- In-Class Exercise -->
+            <div class="bg-white rounded-xl shadow-md overflow-hidden">
+                <div class="h-1 {% if submission_status.in_class.status == 'graded' %}bg-emerald-500{% elif submission_status.in_class.status == 'submitted' %}bg-cyan-500{% elif submission_status.in_class.status == 'grading' %}bg-purple-500{% else %}bg-gray-200{% endif %}"></div>
+                <div class="p-4">
+                    <div class="flex justify-between items-center mb-3">
+                        <h3 class="text-base font-semibold text-gray-800">In-Class Exercise</h3>
+                        {% if submission_status.in_class.status == 'graded' %}
+                        <span class="text-xs font-medium px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700">
+                            {{ submission_status.in_class.grade.total_points }}/{{ submission_status.in_class.grade.max_points }}
+                        </span>
+                        {% elif submission_status.in_class.status == 'grading' %}
+                        <span class="text-xs font-medium px-2 py-0.5 rounded-full bg-purple-100 text-purple-700">
+                            Grading...
+                        </span>
+                        {% elif submission_status.in_class.status == 'submitted' %}
+                        <span class="text-xs font-medium px-2 py-0.5 rounded-full bg-cyan-100 text-cyan-700">
+                            Submitted
+                        </span>
+                        {% else %}
+                        <span class="text-xs font-medium px-2 py-0.5 rounded-full bg-gray-100 text-gray-500">
+                            Not Started
+                        </span>
+                        {% endif %}
+                    </div>
+
+                    <div class="flex gap-2">
+                        {% if submission_status.in_class.grade and submission_status.in_class.grade.status == 'completed' %}
+                        <a href="/submissions/{{ submission_status.in_class.submission.id }}/grade"
+                           class="flex-1 text-center text-sm gradient-button text-white px-3 py-2 rounded-lg font-medium">
+                            View Grade
+                        </a>
+                        {% endif %}
+                        <a href="/submit/in_class"
+                           class="flex-1 text-center text-sm {% if submission_status.in_class.submitted %}bg-gray-100 text-gray-600 hover:bg-gray-200{% else %}gradient-button text-white{% endif %} px-3 py-2 rounded-lg transition-colors font-medium">
+                            {% if submission_status.in_class.submitted %}Update{% else %}Submit{% endif %}
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Homework -->
+            <div class="bg-white rounded-xl shadow-md overflow-hidden">
+                <div class="h-1 {% if submission_status.homework.status == 'graded' %}bg-emerald-500{% elif submission_status.homework.status == 'submitted' %}bg-cyan-500{% elif submission_status.homework.status == 'grading' %}bg-purple-500{% else %}bg-gray-200{% endif %}"></div>
+                <div class="p-4">
+                    <div class="flex justify-between items-center mb-3">
+                        <h3 class="text-base font-semibold text-gray-800">Homework</h3>
+                        {% if submission_status.homework.status == 'graded' %}
+                        <span class="text-xs font-medium px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700">
+                            {{ submission_status.homework.grade.total_points }}/{{ submission_status.homework.grade.max_points }}
+                        </span>
+                        {% elif submission_status.homework.status == 'grading' %}
+                        <span class="text-xs font-medium px-2 py-0.5 rounded-full bg-purple-100 text-purple-700">
+                            Grading...
+                        </span>
+                        {% elif submission_status.homework.status == 'submitted' %}
+                        <span class="text-xs font-medium px-2 py-0.5 rounded-full bg-cyan-100 text-cyan-700">
+                            Submitted
+                        </span>
+                        {% else %}
+                        <span class="text-xs font-medium px-2 py-0.5 rounded-full bg-gray-100 text-gray-500">
+                            Not Started
+                        </span>
+                        {% endif %}
+                    </div>
+
+                    <div class="flex gap-2">
+                        {% if submission_status.homework.grade and submission_status.homework.grade.status == 'completed' %}
+                        <a href="/submissions/{{ submission_status.homework.submission.id }}/grade"
+                           class="flex-1 text-center text-sm gradient-button text-white px-3 py-2 rounded-lg font-medium">
+                            View Grade
+                        </a>
+                        {% endif %}
+                        <a href="/submit/homework"
+                           class="flex-1 text-center text-sm {% if submission_status.homework.submitted %}bg-gray-100 text-gray-600 hover:bg-gray-200{% else %}gradient-button text-white{% endif %} px-3 py-2 rounded-lg transition-colors font-medium">
+                            {% if submission_status.homework.submitted %}Update{% else %}Submit{% endif %}
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- GitHub Classroom Assignment -->
+            {% if module.github_classroom_url %}
+            <div class="bg-white rounded-xl shadow-md overflow-hidden">
+                <a href="{{ module.github_classroom_url }}" target="_blank"
+                   class="flex items-center gap-3 bg-gradient-to-r from-emerald-500 to-teal-500 text-white p-4 hover:from-emerald-600 hover:to-teal-600 transition-colors">
+                    <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
+                    </svg>
+                    <div>
+                        <span class="text-sm font-semibold">Accept Assignment</span>
+                        <span class="text-xs opacity-80 block">Opens GitHub Classroom</span>
+                    </div>
+                </a>
+                <div class="p-3 bg-slate-50 border-t border-slate-100">
+                    <p class="text-xs text-slate-600 font-medium mb-2">How it works:</p>
+                    <ol class="text-xs text-slate-500 space-y-1 list-decimal list-inside">
+                        <li>Click above to accept & create your repo</li>
+                        <li>Clone the repo and complete the work</li>
+                        <li>Push your changes to trigger autograding</li>
+                        <li>View results in GitHub Actions tab</li>
+                    </ol>
+                </div>
+            </div>
+            {% endif %}
+
+
         </div>
 
-        <!-- Homework -->
-        <div class="bg-white rounded-xl shadow-md overflow-hidden">
-            <div class="h-1.5 {% if submission_status.homework.status == 'graded' %}bg-emerald-500{% elif submission_status.homework.status == 'submitted' %}bg-blue-500{% elif submission_status.homework.status == 'grading' %}bg-purple-500{% else %}bg-slate-300{% endif %}"></div>
-            <div class="p-6">
-                <div class="flex justify-between items-start mb-4">
-                    <h3 class="text-lg font-semibold text-slate-800">Homework</h3>
-                    {% if submission_status.homework.status == 'graded' %}
-                    <span class="inline-flex items-center gap-1 text-xs font-medium px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-700">
-                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
-                        Graded: {{ submission_status.homework.grade.total_points }}/{{ submission_status.homework.grade.max_points }}
-                    </span>
-                    {% elif submission_status.homework.status == 'grading' %}
-                    <span class="inline-flex items-center gap-1 text-xs font-medium px-2.5 py-1 rounded-full bg-purple-100 text-purple-700">
-                        <span class="w-1.5 h-1.5 rounded-full bg-purple-500 animate-pulse"></span>
-                        Grading...
-                    </span>
-                    {% elif submission_status.homework.status == 'submitted' %}
-                    <span class="inline-flex items-center gap-1 text-xs font-medium px-2.5 py-1 rounded-full bg-blue-100 text-blue-700">
-                        <span class="w-1.5 h-1.5 rounded-full bg-blue-500"></span>
-                        Submitted
-                    </span>
-                    {% else %}
-                    <span class="inline-flex items-center gap-1 text-xs font-medium px-2.5 py-1 rounded-full bg-slate-100 text-slate-600">
-                        <span class="w-1.5 h-1.5 rounded-full bg-slate-400"></span>
-                        Not Started
-                    </span>
-                    {% endif %}
+        <!-- Main Content -->
+        <div class="flex-1 space-y-6">
+            <!-- Assignment Overview (AI-generated) - Collapsible -->
+            {% if module.assignment_overview %}
+            <div class="bg-white rounded-xl shadow-md overflow-hidden">
+                <button onclick="toggleSection('overview')" class="w-full flex items-center justify-between p-4 border-b border-gray-100 bg-gradient-to-r from-purple-50 to-blue-50 hover:from-purple-100 hover:to-blue-100 transition-colors cursor-pointer">
+                    <div class="flex items-center gap-2">
+                        <svg class="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/>
+                        </svg>
+                        <h2 class="text-base font-semibold text-gray-800">Assignment Overview</h2>
+                        <span class="text-xs text-purple-600 bg-purple-100 px-2 py-0.5 rounded-full">AI-Generated</span>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        {% if module.overview_generated_at %}
+                        <span class="text-xs text-gray-500">Updated {{ module.overview_generated_at.strftime('%b %d, %Y') }}</span>
+                        {% endif %}
+                        <svg id="overview-chevron" class="w-5 h-5 text-gray-500 transition-transform duration-200" style="transform: rotate(-90deg);" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                        </svg>
+                    </div>
+                </button>
+                <div id="overview-content" class="transition-all duration-300 ease-in-out" style="max-height: 0; overflow: hidden;">
+                    <div class="p-5 ai-overview text-gray-700">
+                        {{ module.assignment_overview | safe }}
+                    </div>
                 </div>
+            </div>
+            {% endif %}
 
-                {% if module.homework_instructions %}
-                <div class="text-sm text-slate-600 mb-4 line-clamp-3">
-                    {{ module.homework_instructions[:200] }}{% if module.homework_instructions|length > 200 %}...{% endif %}
-                </div>
-                {% endif %}
-
-                {% if submission_status.homework.submitted %}
-                <div class="text-sm text-slate-500 mb-4">
-                    <span class="font-medium">Submitted:</span>
-                    {{ submission_status.homework.submission.submitted_at.strftime('%b %d, %Y at %I:%M %p') }}
-                </div>
-                {% endif %}
-
-                <div class="flex gap-2">
-                    {% if submission_status.homework.grade and submission_status.homework.grade.status == 'completed' %}
-                    <a href="/submissions/{{ submission_status.homework.submission.id }}/grade"
-                       class="flex-1 text-center gradient-button text-white px-4 py-2 rounded-lg">
-                        View Grade
-                    </a>
-                    {% endif %}
-                    <a href="/submit/homework"
-                       class="flex-1 text-center {% if submission_status.homework.submitted %}bg-slate-100 text-slate-700 hover:bg-slate-200{% else %}gradient-button text-white{% endif %} px-4 py-2 rounded-lg transition-colors">
-                        {% if submission_status.homework.submitted %}Update{% else %}Submit{% endif %}
-                    </a>
+            <!-- Course Material (PDF Viewer) - Collapsible -->
+            <div class="bg-white rounded-xl shadow-md overflow-hidden">
+                <button onclick="toggleSection('material')" class="w-full flex items-center justify-between p-4 border-b border-gray-100 bg-gradient-to-r from-blue-50 to-cyan-50 hover:from-blue-100 hover:to-cyan-100 transition-colors cursor-pointer">
+                    <div class="flex items-center gap-2">
+                        <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                        </svg>
+                        <h2 class="text-base font-semibold text-gray-800">Course Material</h2>
+                        <span class="text-xs text-blue-600 bg-blue-100 px-2 py-0.5 rounded-full">PDF</span>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <a href="/modules/{{ module.id }}/pdf" target="_blank" onclick="event.stopPropagation()"
+                           class="inline-flex items-center gap-1 text-xs text-blue-600 hover:text-blue-800">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/>
+                            </svg>
+                            New Tab
+                        </a>
+                        <a href="/modules/{{ module.id }}/pdf/download" onclick="event.stopPropagation()"
+                           class="inline-flex items-center gap-1 text-xs text-blue-600 hover:text-blue-800">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+                            </svg>
+                            Download
+                        </a>
+                        <svg id="material-chevron" class="w-5 h-5 text-gray-500 transition-transform duration-200" style="transform: rotate(-90deg);" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                        </svg>
+                    </div>
+                </button>
+                <div id="material-content" class="transition-all duration-300 ease-in-out" style="max-height: 0; overflow: hidden;">
+                    <div style="height: 70vh; min-height: 600px;">
+                        <iframe src="/modules/{{ module.id }}/pdf" class="w-full h-full" frameborder="0"></iframe>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 </div>
+
+<script>
+    // Check if homework feedback is submitted before releasing
+    function confirmRelease() {
+        const homeworkSubmitted = {{ 'true' if submission_status.homework.submitted else 'false' }};
+
+        if (!homeworkSubmitted) {
+            alert('Please submit your homework feedback before releasing the module.');
+            return false;
+        }
+
+        return confirm('Are you sure you want to release this module and return to module selection?');
+    }
+
+    // Track collapsed state (default: collapsed)
+    const collapsedSections = {
+        overview: true,
+        material: true
+    };
+
+    function toggleSection(section) {
+        const content = document.getElementById(section + '-content');
+        const chevron = document.getElementById(section + '-chevron');
+
+        collapsedSections[section] = !collapsedSections[section];
+
+        if (collapsedSections[section]) {
+            content.style.maxHeight = '0px';
+            content.style.overflow = 'hidden';
+            chevron.style.transform = 'rotate(-90deg)';
+        } else {
+            content.style.maxHeight = section === 'material' ? '80vh' : '2000px';
+            content.style.overflow = 'visible';
+            chevron.style.transform = 'rotate(0deg)';
+        }
+
+        // Save state to localStorage
+        localStorage.setItem('dashboard_collapsed_' + section, collapsedSections[section]);
+    }
+
+    // Restore collapsed state on page load (default: collapsed)
+    document.addEventListener('DOMContentLoaded', function() {
+        ['overview', 'material'].forEach(function(section) {
+            const content = document.getElementById(section + '-content');
+            if (!content) return;
+
+            const savedState = localStorage.getItem('dashboard_collapsed_' + section);
+            // Only expand if explicitly saved as 'false'
+            if (savedState === 'false') {
+                collapsedSections[section] = false;
+                content.style.maxHeight = section === 'material' ? '80vh' : '2000px';
+                content.style.overflow = 'visible';
+                document.getElementById(section + '-chevron').style.transform = 'rotate(0deg)';
+            }
+            // Otherwise keep default collapsed state (already set in HTML)
+        });
+    });
+</script>
 {% endblock %}

@@ -1,0 +1,246 @@
+{% extends "base.html" %}
+
+{% block title %}{{ module.name }} - Student Portal{% endblock %}
+
+{% block content %}
+<div class="max-w-6xl mx-auto px-4 py-6">
+    <!-- Header -->
+    <div class="flex justify-between items-start mb-6">
+        <div>
+            <a href="/student" class="text-blue-600 hover:text-blue-800 text-sm mb-2 inline-block">&larr; Back to Dashboard</a>
+            <div class="flex items-center gap-3">
+                <span class="text-base text-purple-600 font-semibold">Week {{ module.week_number }}</span>
+                {% if course %}
+                <span class="text-sm text-slate-500">{{ course.name }}</span>
+                {% endif %}
+            </div>
+            <h1 class="text-2xl font-bold text-gray-800">{{ module.name }}</h1>
+        </div>
+        <a href="/help/student" class="inline-flex items-center gap-2 px-3 py-2 text-gray-400 hover:text-purple-600 hover:bg-purple-50 rounded-lg transition-colors text-sm font-medium">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            </svg>
+            Help
+        </a>
+    </div>
+
+    <!-- Success Message -->
+    {% if request.query_params.get('submitted') %}
+    <div class="bg-emerald-50 border border-emerald-200 text-emerald-700 px-4 py-3 rounded-xl mb-6 flex items-center gap-3">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+        </svg>
+        <span>Your {{ request.query_params.get('submitted')|replace('_', ' ') }} submission was saved successfully!</span>
+    </div>
+    {% endif %}
+
+    <div class="flex gap-8">
+        <!-- Left Sidebar -->
+        <div class="w-72 flex-shrink-0 space-y-6">
+            <!-- In-Class Exercise -->
+            <div class="bg-white rounded-xl shadow-md overflow-hidden">
+                <div class="h-1 {% if submission_status.in_class.status == 'graded' %}bg-emerald-500{% elif submission_status.in_class.status == 'submitted' %}bg-blue-500{% elif submission_status.in_class.status == 'grading' %}bg-purple-500{% else %}bg-gray-200{% endif %}"></div>
+                <div class="p-4">
+                    <div class="flex justify-between items-center mb-3">
+                        <h3 class="text-base font-semibold text-gray-800">In-Class Exercise</h3>
+                        {% if submission_status.in_class.status == 'graded' %}
+                        <span class="text-xs font-medium px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700">
+                            {{ submission_status.in_class.grade.total_points }}/{{ submission_status.in_class.grade.max_points }}
+                        </span>
+                        {% elif submission_status.in_class.status == 'grading' %}
+                        <span class="text-xs font-medium px-2 py-0.5 rounded-full bg-purple-100 text-purple-700">
+                            Grading...
+                        </span>
+                        {% elif submission_status.in_class.status == 'submitted' %}
+                        <span class="text-xs font-medium px-2 py-0.5 rounded-full bg-blue-100 text-blue-700">
+                            Submitted
+                        </span>
+                        {% else %}
+                        <span class="text-xs font-medium px-2 py-0.5 rounded-full bg-gray-100 text-gray-500">
+                            Not Started
+                        </span>
+                        {% endif %}
+                    </div>
+
+                    <div class="flex gap-2">
+                        {% if submission_status.in_class.submitted %}
+                        <a href="/student/submission/{{ submission_status.in_class.submission.id }}/github-grade"
+                           class="flex-1 text-center text-sm bg-emerald-100 text-emerald-700 px-3 py-2 rounded-lg font-medium hover:bg-emerald-200 transition-colors">
+                            View Grade
+                        </a>
+                        {% endif %}
+                        <a href="/student/module/{{ module.id }}/submit/in_class"
+                           class="flex-1 text-center text-sm {% if submission_status.in_class.submitted %}bg-gray-100 text-gray-600 hover:bg-gray-200{% else %}gradient-button text-white{% endif %} px-3 py-2 rounded-lg transition-colors font-medium">
+                            {% if submission_status.in_class.submitted %}Update{% else %}Submit{% endif %}
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Homework -->
+            <div class="bg-white rounded-xl shadow-md overflow-hidden">
+                <div class="h-1 {% if submission_status.homework.status == 'graded' %}bg-emerald-500{% elif submission_status.homework.status == 'submitted' %}bg-blue-500{% elif submission_status.homework.status == 'grading' %}bg-purple-500{% else %}bg-gray-200{% endif %}"></div>
+                <div class="p-4">
+                    <div class="flex justify-between items-center mb-3">
+                        <h3 class="text-base font-semibold text-gray-800">Homework</h3>
+                        {% if submission_status.homework.status == 'graded' %}
+                        <span class="text-xs font-medium px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700">
+                            {{ submission_status.homework.grade.total_points }}/{{ submission_status.homework.grade.max_points }}
+                        </span>
+                        {% elif submission_status.homework.status == 'grading' %}
+                        <span class="text-xs font-medium px-2 py-0.5 rounded-full bg-purple-100 text-purple-700">
+                            Grading...
+                        </span>
+                        {% elif submission_status.homework.status == 'submitted' %}
+                        <span class="text-xs font-medium px-2 py-0.5 rounded-full bg-blue-100 text-blue-700">
+                            Submitted
+                        </span>
+                        {% else %}
+                        <span class="text-xs font-medium px-2 py-0.5 rounded-full bg-gray-100 text-gray-500">
+                            Not Started
+                        </span>
+                        {% endif %}
+                    </div>
+
+                    <div class="flex gap-2">
+                        {% if submission_status.homework.submitted %}
+                        <a href="/student/submission/{{ submission_status.homework.submission.id }}/github-grade"
+                           class="flex-1 text-center text-sm bg-emerald-100 text-emerald-700 px-3 py-2 rounded-lg font-medium hover:bg-emerald-200 transition-colors">
+                            View Grade
+                        </a>
+                        {% endif %}
+                        <a href="/student/module/{{ module.id }}/submit/homework"
+                           class="flex-1 text-center text-sm {% if submission_status.homework.submitted %}bg-gray-100 text-gray-600 hover:bg-gray-200{% else %}gradient-button text-white{% endif %} px-3 py-2 rounded-lg transition-colors font-medium">
+                            {% if submission_status.homework.submitted %}Update{% else %}Submit{% endif %}
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- GitHub Classroom Assignment -->
+            {% if module.github_classroom_url %}
+            <div class="bg-white rounded-xl shadow-md overflow-hidden">
+                <a href="{{ module.github_classroom_url }}" target="_blank"
+                   class="flex items-center gap-3 bg-gradient-to-r from-emerald-500 to-teal-500 text-white p-4 hover:from-emerald-600 hover:to-teal-600 transition-colors">
+                    <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
+                    </svg>
+                    <div>
+                        <span class="text-sm font-semibold">Accept Assignment</span>
+                        <span class="text-xs opacity-80 block">Opens GitHub Classroom</span>
+                    </div>
+                </a>
+                <div class="p-3 bg-slate-50 border-t border-slate-100">
+                    <p class="text-xs text-slate-600 font-medium mb-2">How it works:</p>
+                    <ol class="text-xs text-slate-500 space-y-1 list-decimal list-inside">
+                        <li>Click above to accept & create your repo</li>
+                        <li>Clone the repo and complete the work</li>
+                        <li>Push your changes to trigger autograding</li>
+                        <li>View results in GitHub Actions tab</li>
+                    </ol>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Help -->
+            <a href="/help/student" class="flex items-center gap-3 bg-white rounded-xl shadow-md p-4 hover:bg-purple-50 transition-colors">
+                <div class="w-10 h-10 rounded-lg bg-purple-100 flex items-center justify-center">
+                    <svg class="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                </div>
+                <div>
+                    <span class="text-sm font-semibold text-gray-800">Need Help?</span>
+                    <span class="text-xs text-gray-500 block">View student guide</span>
+                </div>
+            </a>
+
+        </div>
+
+        <!-- Main Content - PDF Viewer -->
+        <div class="flex-1">
+            <!-- Assignment Overview -->
+            {% if module.assignment_overview %}
+            <div class="bg-white rounded-xl shadow-md overflow-hidden mb-6">
+                <button onclick="toggleSection('overview')" class="w-full flex items-center justify-between p-4 border-b border-gray-100 bg-gradient-to-r from-purple-50 to-blue-50 hover:from-purple-100 hover:to-blue-100 transition-colors cursor-pointer">
+                    <div class="flex items-center gap-2">
+                        <svg class="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/>
+                        </svg>
+                        <h2 class="text-base font-semibold text-gray-800">Assignment Overview</h2>
+                    </div>
+                    <svg id="overview-chevron" class="w-5 h-5 text-gray-500 transition-transform duration-200" style="transform: rotate(-90deg);" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                    </svg>
+                </button>
+                <div id="overview-content" class="transition-all duration-300 ease-in-out" style="max-height: 0; overflow: hidden;">
+                    <div class="p-5 ai-overview text-gray-700">
+                        {{ module.assignment_overview | safe }}
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- PDF Viewer -->
+            <div class="bg-white rounded-xl shadow-md overflow-hidden">
+                <button onclick="toggleSection('material')" class="w-full flex items-center justify-between p-4 border-b border-gray-100 bg-gradient-to-r from-blue-50 to-cyan-50 hover:from-blue-100 hover:to-cyan-100 transition-colors cursor-pointer">
+                    <div class="flex items-center gap-2">
+                        <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                        </svg>
+                        <h2 class="text-base font-semibold text-gray-800">Course Material</h2>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <a href="/modules/{{ module.id }}/pdf" target="_blank" onclick="event.stopPropagation()"
+                           class="inline-flex items-center gap-1 text-xs text-blue-600 hover:text-blue-800">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/>
+                            </svg>
+                            New Tab
+                        </a>
+                        <a href="/modules/{{ module.id }}/pdf/download" onclick="event.stopPropagation()"
+                           class="inline-flex items-center gap-1 text-xs text-blue-600 hover:text-blue-800">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+                            </svg>
+                            Download
+                        </a>
+                        <svg id="material-chevron" class="w-5 h-5 text-gray-500 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                        </svg>
+                    </div>
+                </button>
+                <div id="material-content" class="transition-all duration-300 ease-in-out">
+                    <div style="height: 70vh; min-height: 600px;">
+                        <iframe src="/modules/{{ module.id }}/pdf" class="w-full h-full" frameborder="0"></iframe>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const collapsedSections = {
+        overview: true,
+        material: false
+    };
+
+    function toggleSection(section) {
+        const content = document.getElementById(section + '-content');
+        const chevron = document.getElementById(section + '-chevron');
+
+        collapsedSections[section] = !collapsedSections[section];
+
+        if (collapsedSections[section]) {
+            content.style.maxHeight = '0px';
+            content.style.overflow = 'hidden';
+            chevron.style.transform = 'rotate(-90deg)';
+        } else {
+            content.style.maxHeight = section === 'material' ? '80vh' : '2000px';
+            content.style.overflow = 'visible';
+            chevron.style.transform = 'rotate(0deg)';
+        }
+    }
+</script>
+{% endblock %}

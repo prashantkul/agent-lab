@@ -147,53 +147,9 @@ async def run_auto_grader(submission_id: int, db: Session) -> Grade:
                 db.commit()
                 return grade
 
-            # Check if custom grading script is configured
-            if module.grading_script_url:
-                # Clone grading scripts
-                grader_path = Path(tmpdir) / "grader"
-                grader_result = subprocess.run(
-                    [
-                        "git",
-                        "clone",
-                        "--depth",
-                        "1",
-                        module.grading_script_url,
-                        str(grader_path),
-                    ],
-                    capture_output=True,
-                    text=True,
-                    timeout=60,
-                )
-
-                if grader_result.returncode != 0:
-                    # Fall back to basic checks
-                    grading_output = run_basic_checks(student_repo_path, module)
-                else:
-                    # Run grading script
-                    grade_script = grader_path / "grade.py"
-                    if grade_script.exists():
-                        grader_run = subprocess.run(
-                            ["python", "grade.py", str(student_repo_path)],
-                            cwd=grader_path,
-                            capture_output=True,
-                            text=True,
-                            timeout=300,  # 5 minute timeout
-                        )
-
-                        if grader_run.returncode == 0:
-                            try:
-                                grading_output = json.loads(grader_run.stdout)
-                            except json.JSONDecodeError:
-                                grading_output = run_basic_checks(student_repo_path, module)
-                                grading_output["feedback"] += "\n\nNote: Grading script produced invalid output, using basic checks."
-                        else:
-                            grading_output = run_basic_checks(student_repo_path, module)
-                            grading_output["feedback"] += f"\n\nNote: Grading script failed: {grader_run.stderr}"
-                    else:
-                        grading_output = run_basic_checks(student_repo_path, module)
-            else:
-                # No custom grading script, use basic checks
-                grading_output = run_basic_checks(student_repo_path, module)
+            # Note: Primary grading is now handled by GitHub Classroom autograder.
+            # This runs basic structural checks as a fallback/supplement.
+            grading_output = run_basic_checks(student_repo_path, module)
 
             # Update grade record
             grade.total_points = Decimal(str(grading_output.get("total_points", 0)))

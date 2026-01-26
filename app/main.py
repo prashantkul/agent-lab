@@ -9,20 +9,19 @@ from starlette.middleware.sessions import SessionMiddleware
 
 from app.config import settings
 from app.database import engine, Base
-from app.routers import auth, dashboard, modules, submissions, grades, admin
+from app.routers import auth, dashboard, modules, submissions, grades, admin, student
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Application lifespan handler."""
-    # Create database tables
-    Base.metadata.create_all(bind=engine)
+    # Database tables are created by Alembic migrations
     yield
 
 
 app = FastAPI(
-    title="Course Material Review Portal",
-    description="Crowdsource reviews of course materials for Agentic AI Systems course",
+    title="Agent Lab",
+    description="Agentic AI Systems Course - Module Review Portal",
     version="1.0.0",
     lifespan=lifespan,
 )
@@ -44,6 +43,7 @@ app.include_router(modules.router)
 app.include_router(submissions.router)
 app.include_router(grades.router)
 app.include_router(admin.router, prefix="/admin", tags=["admin"])
+app.include_router(student.router)
 
 
 # Templates

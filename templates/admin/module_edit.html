@@ -115,14 +115,62 @@
                 <p class="text-xs text-slate-500 mt-1">The file ID from the Google Drive URL</p>
             </div>
             <div>
-                <label for="starter_repo_url" class="block text-sm font-medium text-slate-700 mb-1">Starter Repo URL</label>
-                <input type="url" id="starter_repo_url" name="starter_repo_url"
-                       value="{{ module.starter_repo_url if module else '' }}"
-                       placeholder="https://github.com/course/week1-starter"
+                <label for="github_classroom_url" class="block text-sm font-medium text-slate-700 mb-1">
+                    GitHub Classroom URL
+                    <span class="text-xs text-slate-400 font-normal ml-2">Assignment invitation link</span>
+                </label>
+                <input type="url" id="github_classroom_url" name="github_classroom_url"
+                       value="{{ module.github_classroom_url if module else '' }}"
+                       placeholder="https://classroom.github.com/a/abc123"
                        class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none">
+                <p class="text-xs text-slate-500 mt-1">Students will see an "Accept Assignment" button linking here</p>
             </div>
         </div>
     </div>
+
+    <!-- AI Assignment Overview -->
+    {% if not is_new %}
+    <div class="p-6">
+        <div class="flex items-center justify-between mb-4">
+            <div class="flex items-center gap-2">
+                <h2 class="text-lg font-semibold text-slate-800">AI Assignment Overview</h2>
+                <span class="text-xs text-purple-600 bg-purple-100 px-2 py-0.5 rounded-full">For Reviewers</span>
+            </div>
+            {% if module.github_classroom_url %}
+            <button type="button" onclick="generateOverview()" id="generate-btn"
+                    class="text-sm px-4 py-2 bg-purple-100 text-purple-700 rounded-lg hover:bg-purple-200 transition-colors flex items-center gap-2">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                </svg>
+                {% if module.assignment_overview %}Regenerate{% else %}Generate{% endif %} Overview
+            </button>
+            {% else %}
+            <span class="text-xs text-slate-500">Add a GitHub Classroom URL to enable</span>
+            {% endif %}
+        </div>
+
+        {% if module.assignment_overview %}
+        <div class="bg-slate-50 rounded-lg p-4 border border-slate-200">
+            <div class="flex justify-between items-center mb-3">
+                <span class="text-xs text-slate-500">
+                    Generated {% if module.overview_generated_at %}{{ module.overview_generated_at.strftime('%b %d, %Y at %I:%M %p') }}{% endif %}
+                </span>
+            </div>
+            <div class="ai-overview text-slate-700" id="overview-content">
+                {{ module.assignment_overview | safe }}
+            </div>
+        </div>
+        {% else %}
+        <div class="bg-slate-50 rounded-lg p-6 border border-dashed border-slate-300 text-center">
+            <svg class="w-12 h-12 text-slate-400 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/>
+            </svg>
+            <p class="text-slate-600 mb-2">No AI overview generated yet</p>
+            <p class="text-sm text-slate-500">Click "Generate Overview" to scan the assignment and create a summary for reviewers.</p>
+        </div>
+        {% endif %}
+    </div>
+    {% endif %}
 
     <!-- Instructions -->
     <div class="p-6">
@@ -143,35 +191,24 @@
 
     <!-- Grading -->
     <div class="p-6">
-        <h2 class="text-lg font-semibold text-slate-800 mb-4">Grading Configuration</h2>
-        <div class="flex items-center gap-3 mb-4">
-            <input type="checkbox" id="grading_enabled" name="grading_enabled"
-                   {% if not module or module.grading_enabled %}checked{% endif %}
-                   class="w-5 h-5 rounded border-slate-300 text-blue-600 focus:ring-blue-500">
-            <label for="grading_enabled" class="text-sm text-slate-700">Enable Grading</label>
+        <div class="flex items-center gap-2 mb-4">
+            <h2 class="text-lg font-semibold text-slate-800">Grading</h2>
+            <span class="text-xs text-emerald-600 bg-emerald-100 px-2 py-0.5 rounded-full">via GitHub Classroom</span>
         </div>
 
-        <div class="grid md:grid-cols-2 gap-4">
-            <div>
-                <label for="grading_script_url" class="block text-sm font-medium text-slate-700 mb-1">Grading Script Repo URL</label>
-                <input type="url" id="grading_script_url" name="grading_script_url"
-                       value="{{ module.grading_script_url if module else '' }}"
-                       placeholder="https://github.com/course/week1-grader"
-                       class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none">
-            </div>
-            <div>
-                <label for="max_points" class="block text-sm font-medium text-slate-700 mb-1">Max Points</label>
-                <input type="number" id="max_points" name="max_points" min="1"
-                       value="{{ module.max_points if module else 100 }}"
-                       class="w-32 px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none">
-            </div>
+        <div class="mb-4">
+            <label for="max_points" class="block text-sm font-medium text-slate-700 mb-1">Max Points</label>
+            <input type="number" id="max_points" name="max_points" min="1"
+                   value="{{ module.max_points if module else 100 }}"
+                   class="w-32 px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none">
         </div>
 
-        <div class="mt-4">
+        <div>
             <label for="grading_criteria" class="block text-sm font-medium text-slate-700 mb-1">Grading Criteria (Markdown)</label>
             <textarea id="grading_criteria" name="grading_criteria" rows="4"
                       placeholder="## Rubric&#10;| Component | Points | Criteria |&#10;..."
                       class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none font-mono text-sm">{{ module.grading_criteria if module else '' }}</textarea>
+            <p class="text-xs text-slate-500 mt-1">Displayed to students for reference. Actual grading handled by GitHub Classroom autograder.</p>
         </div>
     </div>
 
@@ -205,4 +242,38 @@
         </button>
     </div>
 </form>
+
+{% if not is_new %}
+<script>
+function generateOverview() {
+    const btn = document.getElementById('generate-btn');
+    btn.disabled = true;
+    btn.innerHTML = `
+        <svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+        </svg>
+        Generating...
+    `;
+
+    // Submit form to generate overview endpoint
+    const form = document.createElement('form');
+    form.method = 'POST';
+    form.action = '/admin/modules/{{ module.id }}/generate-overview';
+    document.body.appendChild(form);
+    form.submit();
+}
+
+// Check for success message in URL
+const urlParams = new URLSearchParams(window.location.search);
+if (urlParams.get('overview_generated') === '1') {
+    // Show success message
+    const alert = document.createElement('div');
+    alert.className = 'fixed top-4 right-4 bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded-lg shadow-lg z-50';
+    alert.innerHTML = '<strong>Success!</strong> AI overview has been generated.';
+    document.body.appendChild(alert);
+    setTimeout(() => alert.remove(), 5000);
+}
+</script>
+{% endif %}
 {% endblock %}

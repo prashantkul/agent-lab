@@ -28,6 +28,12 @@ class Settings(BaseSettings):
     # Slack
     SLACK_WEBHOOK_URL: Optional[str] = None
 
+    # Anthropic (for AI module import)
+    ANTHROPIC_API_KEY: str = ""
+
+    # GitHub (for fetching grades from GitHub Classroom)
+    GITHUB_PAT: str = ""
+
     # App Configuration
     SECRET_KEY: str = "change-me-in-production"
     APP_URL: str = "http://localhost:8000"

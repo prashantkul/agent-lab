@@ -3,7 +3,7 @@
 {% block title %}Submit {{ submission_type|replace('_', ' ')|title }} - {{ module.name }}{% endblock %}
 
 {% block content %}
-<div class="max-w-2xl mx-auto px-4 py-8">
+<div class="max-w-4xl mx-auto px-4 py-8">
     <div class="mb-6">
         <a href="/dashboard" class="text-blue-600 hover:text-blue-800 text-sm mb-2 inline-block">&larr; Back to Dashboard</a>
         <h1 class="text-2xl font-bold text-slate-800">
@@ -20,100 +20,170 @@
     {% endif %}
 
     <form action="/submit/{{ submission_type }}" method="post" class="bg-white rounded-xl shadow-md p-6">
-        <!-- GitHub Link -->
-        <div class="mb-6">
-            <label for="github_link" class="block text-sm font-medium text-slate-700 mb-2">
-                GitHub Repository Link <span class="text-red-500">*</span>
-            </label>
-            <input type="url" id="github_link" name="github_link" required
-                   value="{{ existing.github_link if existing else '' }}"
-                   placeholder="https://github.com/username/repository"
-                   pattern="https://github\.com/[\w-]+/[\w.-]+/?"
-                   class="w-full px-4 py-2.5 rounded-lg border border-slate-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all">
-            <p class="text-xs text-slate-500 mt-1">
-                Must be a valid GitHub repository URL (e.g., https://github.com/username/repo)
-            </p>
-        </div>
-
-        <!-- Comments -->
-        <div class="mb-6">
-            <label for="comments" class="block text-sm font-medium text-slate-700 mb-2">
-                Review Comments <span class="text-red-500">*</span>
-            </label>
-            <textarea id="comments" name="comments" required rows="6"
-                      placeholder="Please share your feedback:
-
-- What worked well?
-- What was confusing?
-- Any setup issues?
-- Suggestions for improvement?"
-                      class="w-full px-4 py-2.5 rounded-lg border border-slate-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all resize-y">{{ existing.comments if existing else '' }}</textarea>
-        </div>
-
-        <!-- Ratings Section -->
-        <div class="bg-slate-50 rounded-lg p-4 mb-6">
-            <h3 class="text-sm font-medium text-slate-700 mb-4">Feedback Ratings (Optional but helpful)</h3>
-
-            <div class="grid md:grid-cols-2 gap-6">
-                <!-- Clarity Rating -->
-                <div>
-                    <label class="block text-sm text-slate-600 mb-2">
-                        Clarity of Instructions
-                    </label>
-                    <div class="flex gap-2">
-                        {% for i in range(1, 6) %}
-                        <label class="cursor-pointer">
-                            <input type="radio" name="clarity_rating" value="{{ i }}" class="sr-only peer"
-                                   {% if existing and existing.clarity_rating == i %}checked{% endif %}>
-                            <span class="block w-10 h-10 rounded-lg border-2 border-slate-200 text-center leading-9 text-slate-400 peer-checked:border-blue-500 peer-checked:bg-blue-50 peer-checked:text-blue-600 hover:border-blue-300 transition-all">
-                                {{ i }}
-                            </span>
-                        </label>
-                        {% endfor %}
-                    </div>
-                    <p class="text-xs text-slate-400 mt-1">1 = Unclear, 5 = Very Clear</p>
+        <!-- Feedback Ratings Section -->
+        <div class="space-y-8 mb-6">
+            <div class="flex items-center justify-between border-b pb-2">
+                <h3 class="text-base font-semibold text-slate-800">Module Feedback</h3>
+                <div class="text-xs text-slate-500">
+                    <span class="inline-block px-2 py-1 bg-slate-100 rounded">1 = Poor</span>
+                    <span class="mx-1">...</span>
+                    <span class="inline-block px-2 py-1 bg-blue-100 text-blue-700 rounded">10 = Perfect</span>
                 </div>
+            </div>
 
-                <!-- Difficulty Rating -->
-                <div>
-                    <label class="block text-sm text-slate-600 mb-2">
-                        Difficulty Level
+            {% set labels = {1: 'Poor', 2: 'Very Weak', 3: 'Weak', 4: 'Below Avg', 5: 'Average', 6: 'Above Avg', 7: 'Good', 8: 'Very Good', 9: 'Excellent', 10: 'Perfect'} %}
+            {% set colors = {
+                1: 'border-red-300 bg-red-50 text-red-600 peer-checked:border-red-500 peer-checked:bg-red-100 hover:border-red-400',
+                2: 'border-red-200 bg-red-50 text-red-500 peer-checked:border-red-400 peer-checked:bg-red-100 hover:border-red-300',
+                3: 'border-orange-300 bg-orange-50 text-orange-600 peer-checked:border-orange-500 peer-checked:bg-orange-100 hover:border-orange-400',
+                4: 'border-amber-300 bg-amber-50 text-amber-600 peer-checked:border-amber-500 peer-checked:bg-amber-100 hover:border-amber-400',
+                5: 'border-yellow-300 bg-yellow-50 text-yellow-600 peer-checked:border-yellow-500 peer-checked:bg-yellow-100 hover:border-yellow-400',
+                6: 'border-lime-300 bg-lime-50 text-lime-600 peer-checked:border-lime-500 peer-checked:bg-lime-100 hover:border-lime-400',
+                7: 'border-green-300 bg-green-50 text-green-600 peer-checked:border-green-500 peer-checked:bg-green-100 hover:border-green-400',
+                8: 'border-emerald-300 bg-emerald-50 text-emerald-600 peer-checked:border-emerald-500 peer-checked:bg-emerald-100 hover:border-emerald-400',
+                9: 'border-teal-300 bg-teal-50 text-teal-600 peer-checked:border-teal-500 peer-checked:bg-teal-100 hover:border-teal-400',
+                10: 'border-cyan-300 bg-cyan-50 text-cyan-600 peer-checked:border-cyan-500 peer-checked:bg-cyan-100 hover:border-cyan-400'
+            } %}
+
+            <!-- Rating 1: Learning Objectives -->
+            <div class="bg-slate-50 rounded-lg p-4">
+                <label class="block text-sm font-medium text-slate-700 mb-3">
+                    1. Were the learning objectives clear and achievable? <span class="text-red-500">*</span>
+                </label>
+                <div class="grid grid-cols-10 gap-1">
+                    {% for i in range(1, 11) %}
+                    <label class="cursor-pointer">
+                        <input type="radio" name="q_objectives" value="{{ i }}" class="sr-only peer" required
+                               {% if existing and existing.feedback_responses and existing.feedback_responses.q_objectives == i|string %}checked{% endif %}>
+                        <span class="flex flex-col items-center py-2 rounded-lg border-2 {{ colors[i] }} transition-all">
+                            <span class="text-lg font-bold">{{ i }}</span>
+                            <span class="text-[9px] leading-tight font-medium">{{ labels[i] }}</span>
+                        </span>
                     </label>
-                    <div class="flex gap-2">
-                        {% for i in range(1, 6) %}
-                        <label class="cursor-pointer">
-                            <input type="radio" name="difficulty_rating" value="{{ i }}" class="sr-only peer"
-                                   {% if existing and existing.difficulty_rating == i %}checked{% endif %}>
-                            <span class="block w-10 h-10 rounded-lg border-2 border-slate-200 text-center leading-9 text-slate-400 peer-checked:border-blue-500 peer-checked:bg-blue-50 peer-checked:text-blue-600 hover:border-blue-300 transition-all">
-                                {{ i }}
-                            </span>
-                        </label>
-                        {% endfor %}
-                    </div>
-                    <p class="text-xs text-slate-400 mt-1">1 = Too Easy, 5 = Too Hard</p>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- Rating 2: Content Quality -->
+            <div class="bg-slate-50 rounded-lg p-4">
+                <label class="block text-sm font-medium text-slate-700 mb-3">
+                    2. How was the quality of the PDF materials? <span class="text-red-500">*</span>
+                </label>
+                <div class="grid grid-cols-10 gap-1">
+                    {% for i in range(1, 11) %}
+                    <label class="cursor-pointer">
+                        <input type="radio" name="q_content" value="{{ i }}" class="sr-only peer" required
+                               {% if existing and existing.feedback_responses and existing.feedback_responses.q_content == i|string %}checked{% endif %}>
+                        <span class="flex flex-col items-center py-2 rounded-lg border-2 {{ colors[i] }} transition-all">
+                            <span class="text-lg font-bold">{{ i }}</span>
+                            <span class="text-[9px] leading-tight font-medium">{{ labels[i] }}</span>
+                        </span>
+                    </label>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- Rating 3: Starter Code -->
+            <div class="bg-slate-50 rounded-lg p-4">
+                <label class="block text-sm font-medium text-slate-700 mb-3">
+                    3. Was the starter code well-organized and helpful? <span class="text-red-500">*</span>
+                </label>
+                <div class="grid grid-cols-10 gap-1">
+                    {% for i in range(1, 11) %}
+                    <label class="cursor-pointer">
+                        <input type="radio" name="q_starter_code" value="{{ i }}" class="sr-only peer" required
+                               {% if existing and existing.feedback_responses and existing.feedback_responses.q_starter_code == i|string %}checked{% endif %}>
+                        <span class="flex flex-col items-center py-2 rounded-lg border-2 {{ colors[i] }} transition-all">
+                            <span class="text-lg font-bold">{{ i }}</span>
+                            <span class="text-[9px] leading-tight font-medium">{{ labels[i] }}</span>
+                        </span>
+                    </label>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- Rating 4: Exercise Difficulty -->
+            <div class="bg-slate-50 rounded-lg p-4">
+                <label class="block text-sm font-medium text-slate-700 mb-3">
+                    4. Was the difficulty level appropriate? <span class="text-red-500">*</span>
+                </label>
+                {% set diff_labels = {1: 'Way Easy', 2: 'Too Easy', 3: 'Easy', 4: 'Bit Easy', 5: 'Just Right', 6: 'Bit Hard', 7: 'Challenge', 8: 'Hard', 9: 'Very Hard', 10: 'Too Hard'} %}
+                {% set diff_colors = {
+                    1: 'border-blue-300 bg-blue-50 text-blue-600 peer-checked:border-blue-500 peer-checked:bg-blue-100 hover:border-blue-400',
+                    2: 'border-blue-200 bg-blue-50 text-blue-500 peer-checked:border-blue-400 peer-checked:bg-blue-100 hover:border-blue-300',
+                    3: 'border-cyan-300 bg-cyan-50 text-cyan-600 peer-checked:border-cyan-500 peer-checked:bg-cyan-100 hover:border-cyan-400',
+                    4: 'border-teal-300 bg-teal-50 text-teal-600 peer-checked:border-teal-500 peer-checked:bg-teal-100 hover:border-teal-400',
+                    5: 'border-emerald-400 bg-emerald-100 text-emerald-700 peer-checked:border-emerald-600 peer-checked:bg-emerald-200 hover:border-emerald-500',
+                    6: 'border-lime-300 bg-lime-50 text-lime-600 peer-checked:border-lime-500 peer-checked:bg-lime-100 hover:border-lime-400',
+                    7: 'border-yellow-300 bg-yellow-50 text-yellow-600 peer-checked:border-yellow-500 peer-checked:bg-yellow-100 hover:border-yellow-400',
+                    8: 'border-orange-300 bg-orange-50 text-orange-600 peer-checked:border-orange-500 peer-checked:bg-orange-100 hover:border-orange-400',
+                    9: 'border-red-300 bg-red-50 text-red-600 peer-checked:border-red-500 peer-checked:bg-red-100 hover:border-red-400',
+                    10: 'border-red-400 bg-red-100 text-red-700 peer-checked:border-red-600 peer-checked:bg-red-200 hover:border-red-500'
+                } %}
+                <div class="grid grid-cols-10 gap-1">
+                    {% for i in range(1, 11) %}
+                    <label class="cursor-pointer">
+                        <input type="radio" name="q_difficulty" value="{{ i }}" class="sr-only peer" required
+                               {% if existing and existing.feedback_responses and existing.feedback_responses.q_difficulty == i|string %}checked{% endif %}>
+                        <span class="flex flex-col items-center py-2 rounded-lg border-2 {{ diff_colors[i] }} transition-all">
+                            <span class="text-lg font-bold">{{ i }}</span>
+                            <span class="text-[9px] leading-tight font-medium">{{ diff_labels[i] }}</span>
+                        </span>
+                    </label>
+                    {% endfor %}
+                </div>
+                <p class="text-xs text-emerald-600 mt-2 font-medium">5 = Just Right is ideal</p>
+            </div>
+
+            <!-- Rating 5: Overall Module Rating -->
+            <div class="bg-slate-50 rounded-lg p-4">
+                <label class="block text-sm font-medium text-slate-700 mb-3">
+                    5. Overall module rating <span class="text-red-500">*</span>
+                </label>
+                <div class="grid grid-cols-10 gap-1">
+                    {% for i in range(1, 11) %}
+                    <label class="cursor-pointer">
+                        <input type="radio" name="q_overall" value="{{ i }}" class="sr-only peer" required
+                               {% if existing and existing.feedback_responses and existing.feedback_responses.q_overall == i|string %}checked{% endif %}>
+                        <span class="flex flex-col items-center py-2 rounded-lg border-2 {{ colors[i] }} transition-all">
+                            <span class="text-lg font-bold">{{ i }}</span>
+                            <span class="text-[9px] leading-tight font-medium">{{ labels[i] }}</span>
+                        </span>
+                    </label>
+                    {% endfor %}
                 </div>
             </div>
 
             <!-- Time Spent -->
-            <div class="mt-4">
-                <label for="time_spent_minutes" class="block text-sm text-slate-600 mb-2">
-                    Time Spent (minutes)
+            <div class="bg-slate-50 rounded-lg p-4">
+                <label for="time_spent_minutes" class="block text-sm font-medium text-slate-700 mb-3">
+                    6. Time spent on this module (minutes) <span class="text-red-500">*</span>
                 </label>
-                <input type="number" id="time_spent_minutes" name="time_spent_minutes" min="1" max="1000"
+                <input type="number" id="time_spent_minutes" name="time_spent_minutes" min="1" max="1000" required
                        value="{{ existing.time_spent_minutes if existing else '' }}"
                        placeholder="e.g., 120"
-                       class="w-32 px-4 py-2 rounded-lg border border-slate-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all">
+                       class="w-40 px-4 py-2.5 rounded-lg border border-slate-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all">
+            </div>
+
+            <!-- Free-form Comments -->
+            <div class="bg-slate-50 rounded-lg p-4">
+                <label for="comments" class="block text-sm font-medium text-slate-700 mb-3">
+                    7. Additional feedback, suggestions, or issues encountered
+                </label>
+                <textarea id="comments" name="comments" rows="4"
+                          placeholder="Share what worked well, what could be improved, any technical issues you faced, or suggestions for future modules..."
+                          class="w-full px-4 py-2.5 rounded-lg border border-slate-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all resize-y">{{ existing.comments if existing else '' }}</textarea>
             </div>
         </div>
 
         <!-- Grading Note -->
-        {% if module.grading_enabled %}
+        {% if module.github_classroom_url %}
         <div class="bg-blue-50 border border-blue-100 text-blue-800 px-4 py-3 rounded-lg mb-6 text-sm">
             <p class="flex items-center gap-2">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
                 </svg>
-                Your submission will be automatically graded after submission.
+                Your code is automatically graded via GitHub Classroom when you push to your repository.
             </p>
         </div>
         {% endif %}

@@ -1,0 +1,146 @@
+{% extends "base.html" %}
+
+{% block title %}Student Dashboard - Agent Lab{% endblock %}
+
+{% block content %}
+<div class="max-w-6xl mx-auto px-4 py-8">
+    <div class="flex justify-between items-center mb-8">
+        <div>
+            <h1 class="text-2xl font-bold text-slate-800">My Courses</h1>
+            <p class="text-slate-600 mt-1">Track your progress and submit assignments</p>
+        </div>
+        <a href="/home" class="inline-flex items-center gap-2 px-4 py-2 bg-slate-100 text-slate-600 rounded-lg hover:bg-slate-200 transition-colors text-sm font-medium">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
+            </svg>
+            Back to Home
+        </a>
+    </div>
+
+    {% if not courses_data %}
+    <div class="bg-white rounded-xl shadow-md p-12 text-center">
+        <svg class="w-16 h-16 text-slate-300 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
+        </svg>
+        <h3 class="text-lg font-medium text-slate-600 mb-2">No courses available</h3>
+        <p class="text-slate-500">Check back later for course materials.</p>
+    </div>
+    {% endif %}
+
+    {% for course_data in courses_data %}
+    <div class="mb-10">
+        <!-- Course Header -->
+        <div class="flex items-center gap-3 mb-4">
+            <span class="text-xs font-semibold text-purple-600 bg-purple-50 px-2 py-1 rounded">{{ course_data.course.code }}</span>
+            <h2 class="text-xl font-bold text-slate-800">{{ course_data.course.name }}</h2>
+            {% if course_data.course.term %}
+            <span class="text-sm text-slate-500">{{ course_data.course.term }}</span>
+            {% endif %}
+        </div>
+
+        {% if course_data.current_week > 0 %}
+        <p class="text-sm text-slate-500 mb-4">
+            <span class="inline-flex items-center gap-1 text-emerald-600 font-medium">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                </svg>
+                Current Week: {{ course_data.current_week }}
+            </span>
+        </p>
+        {% elif course_data.current_week == 0 %}
+        <p class="text-sm text-amber-600 mb-4">Course starts {{ course_data.course.start_date.strftime('%B %d, %Y') if course_data.course.start_date else 'soon' }}</p>
+        {% endif %}
+
+        <!-- Module Cards -->
+        <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-5">
+            {% for item in course_data.modules %}
+            <div class="bg-white rounded-xl shadow-md overflow-hidden border border-slate-100 {% if not item.unlocked %}opacity-60{% endif %}">
+                <!-- Progress Bar -->
+                <div class="h-1.5 bg-slate-100">
+                    <div class="h-full {% if item.progress == item.total %}bg-emerald-500{% elif item.progress > 0 %}bg-blue-500{% else %}bg-slate-200{% endif %}"
+                         style="width: {{ (item.progress / item.total * 100)|int }}%"></div>
+                </div>
+
+                <div class="p-5">
+                    <div class="flex justify-between items-start mb-3">
+                        <span class="text-xs font-semibold text-blue-600 bg-blue-50 px-2 py-1 rounded">
+                            Week {{ item.module.week_number }}
+                        </span>
+                        {% if not item.unlocked %}
+                        <span class="text-xs font-medium px-2.5 py-1 rounded-full bg-slate-100 text-slate-500">
+                            <svg class="w-3 h-3 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+                            </svg>
+                            Locked
+                        </span>
+                        {% elif item.progress == item.total %}
+                        <span class="text-xs font-medium px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-700">
+                            Complete
+                        </span>
+                        {% elif item.homework_submitted or item.in_class_submitted %}
+                        <span class="text-xs font-medium px-2.5 py-1 rounded-full bg-blue-100 text-blue-700">
+                            In Progress
+                        </span>
+                        {% else %}
+                        <span class="text-xs font-medium px-2.5 py-1 rounded-full bg-amber-100 text-amber-700">
+                            Not Started
+                        </span>
+                        {% endif %}
+                    </div>
+
+                    <h3 class="font-semibold text-base text-slate-800 mb-2 line-clamp-2">
+                        {{ item.module.name }}
+                    </h3>
+
+                    {% if item.module.short_description %}
+                    <p class="text-sm text-slate-500 mb-4 line-clamp-2">
+                        {{ item.module.short_description }}
+                    </p>
+                    {% endif %}
+
+                    <!-- Submission Status -->
+                    <div class="flex items-center gap-3 text-xs text-slate-500 mb-4">
+                        <span class="flex items-center gap-1 {% if item.in_class_submitted %}text-emerald-600{% endif %}">
+                            {% if item.in_class_submitted %}
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                            </svg>
+                            {% else %}
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                            </svg>
+                            {% endif %}
+                            In-Class
+                        </span>
+                        <span class="flex items-center gap-1 {% if item.homework_submitted %}text-emerald-600{% endif %}">
+                            {% if item.homework_submitted %}
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                            </svg>
+                            {% else %}
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                            </svg>
+                            {% endif %}
+                            Homework
+                        </span>
+                    </div>
+
+                    {% if item.unlocked %}
+                    <a href="/student/module/{{ item.module.id }}"
+                       class="block text-center gradient-button text-white px-4 py-2 rounded-lg text-sm font-medium">
+                        {% if item.progress == item.total %}View Module{% elif item.homework_submitted or item.in_class_submitted %}Continue{% else %}Start Module{% endif %}
+                    </a>
+                    {% else %}
+                    <span class="block text-center bg-slate-100 text-slate-400 px-4 py-2 rounded-lg text-sm font-medium cursor-not-allowed">
+                        Unlocks Week {{ item.module.week_number }}
+                    </span>
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}

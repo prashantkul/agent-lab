@@ -3,24 +3,32 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}Course Review Portal{% endblock %}</title>
+    <title>{% block title %}Agent Lab{% endblock %}</title>
+    <link rel="icon" type="image/png" href="/static/favicon.png">
+    <link rel="apple-touch-icon" href="/static/apple-touch-icon.png">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
             theme: {
                 extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', 'sans-serif'],
+                    },
                     colors: {
                         primary: {
-                            50: '#eff6ff',
-                            100: '#dbeafe',
-                            200: '#bfdbfe',
-                            300: '#93c5fd',
-                            400: '#60a5fa',
-                            500: '#3b82f6',
-                            600: '#2563eb',
-                            700: '#1d4ed8',
-                            800: '#1e40af',
-                            900: '#1e3a8a',
+                            50: '#faf5ff',
+                            100: '#f3e8ff',
+                            200: '#e9d5ff',
+                            300: '#d8b4fe',
+                            400: '#c084fc',
+                            500: '#a855f7',
+                            600: '#9333ea',
+                            700: '#7c3aed',
+                            800: '#6b21a8',
+                            900: '#581c87',
                         }
                     }
                 }
@@ -29,43 +37,66 @@
     </script>
     <style>
         .gradient-header {
-            background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%);
+            background: linear-gradient(135deg, #0ea5e9 0%, #06b6d4 50%, #14b8a6 100%);
         }
         .gradient-button {
-            background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+            background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
         }
         .gradient-button:hover {
-            background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%);
+            background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%);
         }
+        html {
+            font-size: 18px;
+        }
+        body {
+            font-weight: 400;
+            letter-spacing: 0.01em;
+            font-size: 1rem;
+        }
+        input, select, textarea, button {
+            font-size: 1rem !important;
+        }
+        .text-sm {
+            font-size: 0.95rem !important;
+        }
+        .text-xs {
+            font-size: 0.85rem !important;
+        }
+        /* AI Overview content styling */
+        .ai-overview h1 { font-size: 1.5rem; font-weight: 700; margin: 1rem 0 0.5rem; color: #1e293b; }
+        .ai-overview h2 { font-size: 1.25rem; font-weight: 600; margin: 1rem 0 0.5rem; color: #334155; }
+        .ai-overview h3 { font-size: 1.1rem; font-weight: 600; margin: 0.75rem 0 0.375rem; color: #475569; }
+        .ai-overview p { margin: 0.5rem 0; line-height: 1.6; }
+        .ai-overview ul, .ai-overview ol { margin: 0.5rem 0; padding-left: 1.5rem; }
+        .ai-overview li { margin: 0.25rem 0; line-height: 1.5; }
+        .ai-overview ul li { list-style-type: disc; }
+        .ai-overview ol li { list-style-type: decimal; }
+        .ai-overview strong { font-weight: 600; color: #1e293b; }
+        .ai-overview code { background: #f1f5f9; padding: 0.125rem 0.375rem; border-radius: 0.25rem; font-size: 0.9em; }
+        .ai-overview pre { background: #f8fafc; padding: 1rem; border-radius: 0.5rem; overflow-x: auto; margin: 0.75rem 0; }
+        .ai-overview pre code { background: transparent; padding: 0; }
     </style>
     {% block extra_head %}{% endblock %}
 </head>
-<body class="bg-slate-50 min-h-screen">
+<body class="bg-gray-50 min-h-screen text-base flex flex-col">
     {% if user %}
     <!-- Navigation -->
     <header class="gradient-header text-white shadow-lg">
-        <div class="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
-            <div class="flex items-center gap-4">
-                <a href="/dashboard" class="text-xl font-semibold hover:text-blue-200 transition-colors">
-                    Agentic AI Course
-                </a>
-                {% if user.role.value == 'admin' %}
-                <a href="/admin" class="text-sm bg-white/20 px-3 py-1 rounded-full hover:bg-white/30 transition-colors">
-                    Admin
-                </a>
-                {% endif %}
-            </div>
-            <nav class="flex items-center gap-4">
-                <span class="text-sm text-blue-200">{{ user.name or user.email }}</span>
+        <div class="w-full px-8 py-5 flex justify-between items-center">
+            <a href="/home" class="flex items-center gap-4 hover:opacity-90 transition-opacity">
+                <img src="/static/logo.png" alt="Agent Lab" class="h-12 w-12 rounded-xl shadow-md">
+                <span class="text-2xl font-bold">Agent Lab</span>
+            </a>
+            <div class="flex items-center gap-5">
                 {% if user.picture_url %}
-                <img src="{{ user.picture_url }}" alt="Profile" class="w-8 h-8 rounded-full border-2 border-white/50">
+                <img src="{{ user.picture_url }}" alt="Profile" class="w-10 h-10 rounded-full border-2 border-white/40">
                 {% endif %}
                 <form action="/auth/logout" method="post" class="inline">
-                    <button type="submit" class="text-sm text-blue-200 hover:text-white transition-colors">
+                    <button type="submit" class="text-base font-medium text-white/80 hover:text-white transition-colors">
                         Sign Out
                     </button>
                 </form>
-            </nav>
+            </div>
         </div>
     </header>
     {% endif %}
@@ -74,7 +105,7 @@
     {% if messages %}
     <div class="max-w-7xl mx-auto px-4 mt-4">
         {% for message in messages %}
-        <div class="{% if message.type == 'error' %}bg-red-100 border-red-400 text-red-700{% elif message.type == 'success' %}bg-green-100 border-green-400 text-green-700{% else %}bg-blue-100 border-blue-400 text-blue-700{% endif %} px-4 py-3 rounded-lg border mb-2" role="alert">
+        <div class="{% if message.type == 'error' %}bg-red-50 border-red-300 text-red-700{% elif message.type == 'success' %}bg-emerald-50 border-emerald-300 text-emerald-700{% else %}bg-purple-50 border-purple-300 text-purple-700{% endif %} px-4 py-3 rounded-xl border mb-2" role="alert">
             {{ message.text }}
         </div>
         {% endfor %}
@@ -87,9 +118,10 @@
     </main>
 
     <!-- Footer -->
-    <footer class="bg-slate-100 border-t border-slate-200 mt-auto">
-        <div class="max-w-7xl mx-auto px-4 py-6 text-center text-sm text-slate-500">
-            UCLA Extension - Graduate Certificate in AI Engineering
+    <footer class="bg-gray-100 border-t border-gray-200 mt-auto">
+        <div class="max-w-7xl mx-auto px-4 py-6 text-center text-sm text-gray-500">
+            <p>UCLA Extension - Graduate Certificate in AI Engineering</p>
+            <p class="mt-1">&copy; 2026 Agent Lab. All rights reserved.</p>
         </div>
     </footer>
 

@@ -86,31 +86,60 @@ async def submit_assignment(
 
     # Parse form data
     form = await request.form()
-    github_link = form.get("github_link", "").strip()
     comments = form.get("comments", "").strip()
 
-    # Parse optional ratings
-    clarity_rating = form.get("clarity_rating")
-    difficulty_rating = form.get("difficulty_rating")
+    # Parse scale-based feedback (1-10 ratings)
+    q_objectives = form.get("q_objectives")
+    q_content = form.get("q_content")
+    q_starter_code = form.get("q_starter_code")
+    q_difficulty = form.get("q_difficulty")
+    q_overall = form.get("q_overall")
     time_spent = form.get("time_spent_minutes")
 
-    clarity_rating = int(clarity_rating) if clarity_rating else None
-    difficulty_rating = int(difficulty_rating) if difficulty_rating else None
-    time_spent = int(time_spent) if time_spent else None
+    # Validate required ratings
+    if not q_objectives:
+        raise HTTPException(status_code=400, detail="Please rate the learning objectives clarity")
+    if not q_content:
+        raise HTTPException(status_code=400, detail="Please rate the PDF materials quality")
+    if not q_starter_code:
+        raise HTTPException(status_code=400, detail="Please rate the starter code quality")
+    if not q_difficulty:
+        raise HTTPException(status_code=400, detail="Please rate the difficulty level")
+    if not q_overall:
+        raise HTTPException(status_code=400, detail="Please provide an overall rating")
+    if not time_spent:
+        raise HTTPException(status_code=400, detail="Please enter the time spent")
 
-    # Validate
-    if not github_link:
-        raise HTTPException(status_code=400, detail="GitHub link is required")
-    if not validate_github_url(github_link):
-        raise HTTPException(status_code=400, detail="Invalid GitHub repository URL")
-    if not comments:
-        raise HTTPException(status_code=400, detail="Comments are required")
+    # Convert to integers and validate range (1-10)
+    try:
+        q_objectives = int(q_objectives)
+        q_content = int(q_content)
+        q_starter_code = int(q_starter_code)
+        q_difficulty = int(q_difficulty)
+        q_overall = int(q_overall)
+        time_spent = int(time_spent)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid rating value")
 
-    # Validate ratings if provided
-    if clarity_rating is not None and (clarity_rating < 1 or clarity_rating > 5):
-        raise HTTPException(status_code=400, detail="Clarity rating must be 1-5")
-    if difficulty_rating is not None and (difficulty_rating < 1 or difficulty_rating > 5):
-        raise HTTPException(status_code=400, detail="Difficulty rating must be 1-5")
+    for rating, name in [(q_objectives, "objectives"), (q_content, "content"),
+                          (q_starter_code, "starter code"), (q_difficulty, "difficulty"),
+                          (q_overall, "overall")]:
+        if rating < 1 or rating > 10:
+            raise HTTPException(status_code=400, detail=f"Rating for {name} must be between 1 and 10")
+
+    # Store feedback responses as JSON
+    feedback_responses = {
+        "q_objectives": q_objectives,
+        "q_content": q_content,
+        "q_starter_code": q_starter_code,
+        "q_difficulty": q_difficulty,
+        "q_overall": q_overall,
+    }
+
+    # Legacy fields - set defaults
+    github_link = "https://github.com/feedback-only"  # Placeholder for feedback-only submissions
+    clarity_rating = None
+    difficulty_rating = None
 
     # Check for existing submission
     existing = (
@@ -130,6 +159,7 @@ async def submit_assignment(
         existing.clarity_rating = clarity_rating
         existing.difficulty_rating = difficulty_rating
         existing.time_spent_minutes = time_spent
+        existing.feedback_responses = feedback_responses
         existing.submitted_at = datetime.utcnow()
         submission = existing
     else:
@@ -143,23 +173,25 @@ async def submit_assignment(
             clarity_rating=clarity_rating,
             difficulty_rating=difficulty_rating,
             time_spent_minutes=time_spent,
+            feedback_responses=feedback_responses,
         )
         db.add(submission)
 
     db.commit()
     db.refresh(submission)
 
-    # Send notifications
+    # Send notifications with new feedback format
     send_submission_notification(
         reviewer_name=user.name or user.email,
         reviewer_email=user.email,
         module_name=module.name,
         submission_type=submission_type,
-        github_link=submission.github_link,
+        github_link=None,  # No longer required
         comments=comments,
-        clarity_rating=clarity_rating,
-        difficulty_rating=difficulty_rating,
+        clarity_rating=q_objectives,  # Map to objectives rating
+        difficulty_rating=q_difficulty,
         time_spent=time_spent,
+        feedback_responses=feedback_responses,
     )
 
     await notify_slack_new_submission(
@@ -167,16 +199,15 @@ async def submit_assignment(
         reviewer_email=user.email,
         module_name=module.name,
         submission_type=submission_type,
-        github_link=submission.github_link,
-        clarity_rating=clarity_rating,
-        difficulty_rating=difficulty_rating,
+        github_link=None,
+        clarity_rating=q_objectives,
+        difficulty_rating=q_difficulty,
         time_spent=time_spent,
         comments=comments,
+        feedback_responses=feedback_responses,
     )
 
-    # Trigger auto-grading if enabled
-    if module.grading_enabled:
-        background_tasks.add_task(run_auto_grader_task, submission.id, db)
+    # Note: Grading is now handled by GitHub Classroom autograder
 
     return RedirectResponse(url="/dashboard?submitted=1", status_code=303)
 
