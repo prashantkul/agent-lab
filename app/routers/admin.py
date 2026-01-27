@@ -503,6 +503,7 @@ async def create_module(
         estimated_time_minutes=safe_int(form.get("estimated_time_minutes")),
         drive_file_id=form.get("drive_file_id"),
         github_classroom_url=form.get("github_classroom_url") or None,
+        template_repo_url=form.get("template_repo_url") or None,
         instructions=form.get("instructions") or None,
         homework_instructions=form.get("homework_instructions") or None,
         grading_criteria=form.get("grading_criteria") or None,
@@ -572,6 +573,7 @@ async def update_module(
     module.estimated_time_minutes = safe_int(form.get("estimated_time_minutes"))
     module.drive_file_id = form.get("drive_file_id")
     module.github_classroom_url = form.get("github_classroom_url") or None
+    module.template_repo_url = form.get("template_repo_url") or None
     module.instructions = form.get("instructions") or None
     module.homework_instructions = form.get("homework_instructions") or None
     module.grading_criteria = form.get("grading_criteria") or None
@@ -721,13 +723,13 @@ async def generate_module_overview(
     db: Session = Depends(get_db),
     user: User = Depends(require_admin),
 ):
-    """Generate AI overview from GitHub Classroom assignment."""
+    """Generate AI overview from template repository."""
     module = db.query(Module).filter(Module.id == module_id).first()
     if not module:
         raise HTTPException(status_code=404, detail="Module not found")
 
-    if not module.github_classroom_url:
-        raise HTTPException(status_code=400, detail="No GitHub Classroom URL configured")
+    if not module.template_repo_url:
+        raise HTTPException(status_code=400, detail="No template repository URL configured")
 
     await refresh_module_overview(db, module)
 

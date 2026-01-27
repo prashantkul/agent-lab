@@ -4,50 +4,10 @@
 
 {% block content %}
 <div class="mx-auto px-6 py-6" style="max-width: 1380px;">
-    <!-- Module Switcher (if multiple modules selected) -->
-    {% if selected_modules and selected_modules|length > 1 %}
-    <div class="bg-white rounded-xl shadow-md p-3 mb-4 flex items-center gap-3">
-        <span class="text-sm text-gray-500 font-medium">Your Modules:</span>
-        <div class="flex gap-2 flex-1">
-            {% for item in selected_modules %}
-            {% if item.is_active %}
-            <span class="inline-flex items-center gap-2 px-4 py-2 bg-purple-100 text-purple-700 rounded-lg text-sm font-medium border-2 border-purple-300">
-                <span class="w-2 h-2 bg-purple-500 rounded-full"></span>
-                Week {{ item.module.week_number }}: {{ item.module.name }}
-                {% if item.homework_submitted %}
-                <svg class="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
-                </svg>
-                {% endif %}
-            </span>
-            {% else %}
-            <form action="/modules/{{ item.module.id }}/switch" method="post" class="inline">
-                <button type="submit" class="inline-flex items-center gap-2 px-4 py-2 bg-gray-100 text-gray-600 rounded-lg text-sm font-medium hover:bg-gray-200 transition-colors border border-gray-200">
-                    Week {{ item.module.week_number }}: {{ item.module.name }}
-                    {% if item.homework_submitted %}
-                    <svg class="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
-                    </svg>
-                    {% endif %}
-                </button>
-            </form>
-            {% endif %}
-            {% endfor %}
-        </div>
-        {% if can_select_more %}
-        <a href="/modules" class="inline-flex items-center gap-1 text-sm text-blue-600 hover:text-blue-800">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
-            </svg>
-            Add Module
-        </a>
-        {% endif %}
-    </div>
-    {% endif %}
-
-    <!-- Header -->
-    <div class="bg-gradient-to-r from-purple-50 to-blue-50 rounded-xl shadow-md p-4 mb-6 border border-purple-100/50">
-        <div class="flex items-center justify-between">
+    <!-- Collapsible Module Header -->
+    <div class="bg-gradient-to-r from-purple-50 to-blue-50 rounded-xl shadow-md mb-6 border border-purple-100/50 overflow-hidden">
+        <!-- Collapsed Header (always visible) -->
+        <div class="flex items-center justify-between p-4">
             <div class="flex items-center gap-4">
                 <a href="/home" class="inline-flex items-center gap-2 px-3 py-1.5 text-slate-500 hover:text-slate-700 hover:bg-white/50 rounded-lg transition-colors text-sm font-medium">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -55,10 +15,20 @@
                     </svg>
                     Home
                 </a>
-                <div class="border-l border-purple-200 pl-4">
-                    <span class="text-sm text-purple-600 font-semibold">Week {{ module.week_number }}</span>
-                    <h1 class="text-xl font-bold text-gray-800">{{ module.name }}</h1>
-                </div>
+                <button onclick="toggleSection('module')" class="flex items-center gap-3 border-l border-purple-200 pl-4 hover:bg-white/30 rounded-lg pr-3 py-1 transition-colors cursor-pointer">
+                    <div>
+                        <span class="text-sm text-purple-600 font-semibold">Week {{ module.week_number }}</span>
+                        <h1 class="text-xl font-bold text-gray-800">{{ module.name }}</h1>
+                    </div>
+                    {% if selected_modules and selected_modules|length > 1 %}
+                    <div class="flex items-center gap-2">
+                        <span class="text-xs text-purple-500 bg-purple-100 px-2 py-0.5 rounded-full">{{ selected_modules|length }} modules</span>
+                        <svg id="module-chevron" class="w-5 h-5 text-purple-400 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                        </svg>
+                    </div>
+                    {% endif %}
+                </button>
             </div>
             <div class="flex items-center gap-3">
                 <a href="/help/reviewer" class="inline-flex items-center gap-2 px-3 py-2 text-gray-400 hover:text-purple-600 hover:bg-white/50 rounded-lg transition-colors text-sm font-medium">
@@ -85,6 +55,51 @@
                 </form>
             </div>
         </div>
+
+        <!-- Expandable Module Switcher (if multiple modules) -->
+        {% if selected_modules and selected_modules|length > 1 %}
+        <div id="module-content" class="transition-all duration-300 ease-in-out border-t border-purple-100" style="max-height: 0; overflow: hidden;">
+            <div class="p-4 bg-white/50">
+                <div class="flex items-center gap-3">
+                    <span class="text-sm text-gray-500 font-medium">Switch Module:</span>
+                    <div class="flex gap-2 flex-1">
+                        {% for item in selected_modules %}
+                        {% if item.is_active %}
+                        <span class="inline-flex items-center gap-2 px-4 py-2 bg-purple-100 text-purple-700 rounded-lg text-sm font-medium border-2 border-purple-300">
+                            <span class="w-2 h-2 bg-purple-500 rounded-full"></span>
+                            Week {{ item.module.week_number }}: {{ item.module.name }}
+                            {% if item.homework_submitted %}
+                            <svg class="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                            </svg>
+                            {% endif %}
+                        </span>
+                        {% else %}
+                        <form action="/modules/{{ item.module.id }}/switch" method="post" class="inline">
+                            <button type="submit" class="inline-flex items-center gap-2 px-4 py-2 bg-white text-gray-600 rounded-lg text-sm font-medium hover:bg-gray-100 transition-colors border border-gray-200">
+                                Week {{ item.module.week_number }}: {{ item.module.name }}
+                                {% if item.homework_submitted %}
+                                <svg class="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                                </svg>
+                                {% endif %}
+                            </button>
+                        </form>
+                        {% endif %}
+                        {% endfor %}
+                    </div>
+                    {% if can_select_more %}
+                    <a href="/modules" class="inline-flex items-center gap-1 text-sm text-blue-600 hover:text-blue-800">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                        </svg>
+                        Add Module
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% endif %}
     </div>
 
     <!-- PDF Update Banner -->
@@ -309,6 +324,7 @@
 
     // Track collapsed state (default: collapsed)
     const collapsedSections = {
+        module: true,
         overview: true,
         material: true
     };
@@ -322,11 +338,11 @@
         if (collapsedSections[section]) {
             content.style.maxHeight = '0px';
             content.style.overflow = 'hidden';
-            chevron.style.transform = 'rotate(-90deg)';
+            if (chevron) chevron.style.transform = 'rotate(-90deg)';
         } else {
-            content.style.maxHeight = section === 'material' ? '80vh' : '2000px';
+            content.style.maxHeight = section === 'material' ? '80vh' : section === 'module' ? '200px' : '2000px';
             content.style.overflow = 'visible';
-            chevron.style.transform = 'rotate(0deg)';
+            if (chevron) chevron.style.transform = 'rotate(0deg)';
         }
 
         // Save state to localStorage
@@ -335,7 +351,7 @@
 
     // Restore collapsed state on page load (default: collapsed)
     document.addEventListener('DOMContentLoaded', function() {
-        ['overview', 'material'].forEach(function(section) {
+        ['module', 'overview', 'material'].forEach(function(section) {
             const content = document.getElementById(section + '-content');
             if (!content) return;
 
@@ -343,9 +359,10 @@
             // Only expand if explicitly saved as 'false'
             if (savedState === 'false') {
                 collapsedSections[section] = false;
-                content.style.maxHeight = section === 'material' ? '80vh' : '2000px';
+                content.style.maxHeight = section === 'material' ? '80vh' : section === 'module' ? '200px' : '2000px';
                 content.style.overflow = 'visible';
-                document.getElementById(section + '-chevron').style.transform = 'rotate(0deg)';
+                const chevron = document.getElementById(section + '-chevron');
+                if (chevron) chevron.style.transform = 'rotate(0deg)';
             }
             // Otherwise keep default collapsed state (already set in HTML)
         });

@@ -97,6 +97,7 @@ class Module(Base):
     drive_file_id = Column(String(100), nullable=False)
     drive_modified_time = Column(String(50))
     github_classroom_url = Column(String(500))  # Assignment invitation link
+    template_repo_url = Column(String(500))  # Template repo URL for AI overview scanning
 
     # AI-generated assignment overview (for reviewers)
     assignment_overview = Column(Text)

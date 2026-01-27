@@ -171,18 +171,14 @@ Please format your response in markdown with clear headings. Keep it concise but
 async def refresh_module_overview(db, module) -> str:
     """Refresh the assignment overview for a module.
 
-    Note: This feature currently requires manual configuration of a template repo URL.
-    GitHub Classroom URLs are invitation links, not direct repo URLs.
+    Uses the template_repo_url field to scan the assignment template repository.
     """
-    if not module.github_classroom_url:
-        return "No GitHub Classroom URL configured for this module."
+    if not module.template_repo_url:
+        return "No template repository URL configured for this module. Add the GitHub template repo URL in module settings."
 
-    # TODO: In the future, we could use the GitHub Classroom API to fetch
-    # the template repository URL and scan it. For now, we generate a
-    # placeholder overview based on module metadata.
     overview_md = await generate_assignment_overview(
         module_name=module.name,
-        repo_url=None,  # Template repo scanning not yet implemented
+        repo_url=module.template_repo_url,
         learning_objectives=module.learning_objectives,
     )
 

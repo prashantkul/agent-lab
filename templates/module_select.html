@@ -32,14 +32,22 @@
         <!-- Main Content -->
         <div class="flex-1">
             <div class="mb-6">
-                <h1 class="text-2xl font-bold text-slate-800">Select a Module to Review</h1>
-                <p class="text-slate-600 mt-2">
-                    {% if max_modules == 2 %}
-                    You can select up to 2 modules to review
-                    {% else %}
-                    Choose a module to test the materials and provide feedback
-                    {% endif %}
-                </p>
+                <h1 class="text-2xl font-bold text-slate-800">Select Modules to Review</h1>
+                <div class="mt-3 bg-blue-50 border border-blue-200 rounded-lg p-4">
+                    <div class="flex items-start gap-3">
+                        <svg class="w-5 h-5 text-blue-600 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                        <div class="text-sm text-blue-800">
+                            <p class="font-medium mb-1">How it works:</p>
+                            <ul class="list-disc list-inside space-y-1 text-blue-700">
+                                <li>You can select <strong>up to {{ max_modules }} module{% if max_modules > 1 %}s{% endif %}</strong> to review at a time</li>
+                                <li>Complete the assignment and submit your feedback for each module</li>
+                                <li>Once done, release a module to select a different one</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
             </div>
 
             <!-- Current Selections Banner -->
@@ -130,24 +138,34 @@
                                     {{ (module.estimated_time_minutes / 60)|int }}-{{ ((module.estimated_time_minutes / 60) + 1)|int }} hrs
                                 </span>
                                 {% endif %}
-                                <span class="flex items-center gap-1 {% if module_stats[module.id].reviewer_count >= module.max_reviewers %}text-red-500{% endif %}">
+                                {% set spots_left = module.max_reviewers - module_stats[module.id].reviewer_count %}
+                                <span class="flex items-center gap-1 {% if spots_left <= 0 %}text-red-500{% elif spots_left == 1 %}text-amber-600{% else %}text-emerald-600{% endif %}">
                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/>
                                     </svg>
-                                    {{ module_stats[module.id].reviewer_count }}/{{ module.max_reviewers }}
-                                    {% if module_stats[module.id].reviewer_count >= module.max_reviewers %}
-                                    <span class="text-red-500 font-medium">(Full)</span>
+                                    {% if spots_left <= 0 %}
+                                    <span class="font-medium">Full</span>
+                                    {% elif spots_left == 1 %}
+                                    <span class="font-medium">1 spot left</span>
+                                    {% else %}
+                                    <span>{{ spots_left }} spots left</span>
                                     {% endif %}
                                 </span>
                             </div>
 
-                            {% if module.id in selected_module_ids %}
-                            <span class="block text-center text-purple-600 font-medium text-sm">
-                                <svg class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
-                                </svg>
-                                Selected
+                            {% if module.visibility.value == 'draft' %}
+                            <span class="block text-center text-slate-400 font-medium text-sm">
+                                Coming Soon
                             </span>
+                            {% elif module.id in selected_module_ids %}
+                            <form action="/modules/{{ module.id }}/switch" method="post" class="block">
+                                <button type="submit" class="w-full text-center gradient-button text-white font-medium text-sm px-4 py-2 rounded-lg">
+                                    <svg class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                                    </svg>
+                                    Continue Working
+                                </button>
+                            </form>
                             {% elif module_stats[module.id].reviewer_count >= module.max_reviewers %}
                             <span class="block text-center text-slate-400 font-medium text-sm">
                                 Module Full
@@ -216,24 +234,34 @@
                                     {{ (module.estimated_time_minutes / 60)|int }}-{{ ((module.estimated_time_minutes / 60) + 1)|int }} hrs
                                 </span>
                                 {% endif %}
-                                <span class="flex items-center gap-1 {% if module_stats[module.id].reviewer_count >= module.max_reviewers %}text-red-500{% endif %}">
+                                {% set spots_left = module.max_reviewers - module_stats[module.id].reviewer_count %}
+                                <span class="flex items-center gap-1 {% if spots_left <= 0 %}text-red-500{% elif spots_left == 1 %}text-amber-600{% else %}text-emerald-600{% endif %}">
                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/>
                                     </svg>
-                                    {{ module_stats[module.id].reviewer_count }}/{{ module.max_reviewers }}
-                                    {% if module_stats[module.id].reviewer_count >= module.max_reviewers %}
-                                    <span class="text-red-500 font-medium">(Full)</span>
+                                    {% if spots_left <= 0 %}
+                                    <span class="font-medium">Full</span>
+                                    {% elif spots_left == 1 %}
+                                    <span class="font-medium">1 spot left</span>
+                                    {% else %}
+                                    <span>{{ spots_left }} spots left</span>
                                     {% endif %}
                                 </span>
                             </div>
 
-                            {% if module.id in selected_module_ids %}
-                            <span class="block text-center text-purple-600 font-medium text-sm">
-                                <svg class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
-                                </svg>
-                                Selected
+                            {% if module.visibility.value == 'draft' %}
+                            <span class="block text-center text-slate-400 font-medium text-sm">
+                                Coming Soon
                             </span>
+                            {% elif module.id in selected_module_ids %}
+                            <form action="/modules/{{ module.id }}/switch" method="post" class="block">
+                                <button type="submit" class="w-full text-center gradient-button text-white font-medium text-sm px-4 py-2 rounded-lg">
+                                    <svg class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                                    </svg>
+                                    Continue Working
+                                </button>
+                            </form>
                             {% elif module_stats[module.id].reviewer_count >= module.max_reviewers %}
                             <span class="block text-center text-slate-400 font-medium text-sm">
                                 Module Full

@@ -42,14 +42,16 @@ async def list_modules(
     db: Session = Depends(get_db),
     user: User = Depends(require_user),
 ):
-    """List all modules visible to the current user."""
+    """List all modules visible to the current user for selection."""
+    from app.models import Course
+
     if user.role == UserRole.admin:
-        modules = db.query(Module).order_by(Module.week_number).all()
+        modules = db.query(Module).order_by(Module.course_id, Module.week_number).all()
     elif user.role == UserRole.student:
         modules = (
             db.query(Module)
             .filter(Module.visibility == ModuleVisibility.active)
-            .order_by(Module.week_number)
+            .order_by(Module.course_id, Module.week_number)
             .all()
         )
     else:
@@ -57,22 +59,73 @@ async def list_modules(
         modules = (
             db.query(Module)
             .filter(Module.visibility == ModuleVisibility.pilot_review)
-            .order_by(Module.week_number)
+            .order_by(Module.course_id, Module.week_number)
             .all()
         )
 
-    # Get counts
+    # Get reviewer/student counts using UserModuleSelection
     module_stats = {}
     for module in modules:
         reviewer_count = (
-            db.query(func.count(User.id))
+            db.query(func.count(UserModuleSelection.id))
+            .join(User)
             .filter(
-                User.selected_module_id == module.id,
+                UserModuleSelection.module_id == module.id,
                 User.role == UserRole.reviewer,
             )
             .scalar()
         )
-        module_stats[module.id] = {"reviewer_count": reviewer_count}
+        student_count = (
+            db.query(func.count(UserModuleSelection.id))
+            .join(User)
+            .filter(
+                UserModuleSelection.module_id == module.id,
+                User.role == UserRole.student,
+            )
+            .scalar()
+        )
+        module_stats[module.id] = {
+            "reviewer_count": reviewer_count,
+            "student_count": student_count,
+        }
+
+    # Group modules by course
+    courses_with_modules = {}
+    modules_without_course = []
+    for module in modules:
+        if module.course_id:
+            if module.course_id not in courses_with_modules:
+                course = db.query(Course).filter(Course.id == module.course_id).first()
+                courses_with_modules[module.course_id] = {
+                    "course": course,
+                    "modules": []
+                }
+            courses_with_modules[module.course_id]["modules"].append(module)
+        else:
+            modules_without_course.append(module)
+
+    # Get user's current selections
+    user_selections = (
+        db.query(UserModuleSelection)
+        .filter(UserModuleSelection.user_id == user.id)
+        .all()
+    )
+    selected_module_ids = [s.module_id for s in user_selections]
+
+    # Build selection info with homework status
+    user_selection_info = []
+    for sel in user_selections:
+        mod = db.query(Module).filter(Module.id == sel.module_id).first()
+        if mod:
+            hw_submitted = db.query(Submission).filter(
+                Submission.user_id == user.id,
+                Submission.module_id == mod.id,
+                Submission.submission_type == "homework"
+            ).first() is not None
+            user_selection_info.append({
+                "module": mod,
+                "homework_submitted": hw_submitted,
+            })
 
     return templates.TemplateResponse(
         "module_select.html",
@@ -81,6 +134,11 @@ async def list_modules(
             "user": user,
             "modules": modules,
             "module_stats": module_stats,
+            "courses_with_modules": list(courses_with_modules.values()),
+            "modules_without_course": modules_without_course,
+            "selected_module_ids": selected_module_ids,
+            "user_selection_info": user_selection_info,
+            "max_modules": 2 if user.role == UserRole.reviewer else 1,
         },
     )
 
