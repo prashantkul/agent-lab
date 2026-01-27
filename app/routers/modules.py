@@ -312,7 +312,7 @@ async def release_module(
     db: Session = Depends(get_db),
     user: User = Depends(require_user),
 ):
-    """Release a selected module (only after submitting homework feedback)."""
+    """Release a selected module."""
     # Check if user has this module selected
     selection = (
         db.query(UserModuleSelection)
@@ -325,23 +325,6 @@ async def release_module(
 
     if not selection:
         raise HTTPException(status_code=400, detail="Module not selected")
-
-    # Check for homework submission (required before release)
-    homework_submission = (
-        db.query(Submission)
-        .filter(
-            Submission.user_id == user.id,
-            Submission.module_id == module_id,
-            Submission.submission_type == "homework",
-        )
-        .first()
-    )
-
-    if not homework_submission:
-        raise HTTPException(
-            status_code=400,
-            detail="Please submit your homework feedback before releasing the module.",
-        )
 
     # Delete the selection
     db.delete(selection)
@@ -456,7 +439,7 @@ async def swap_module_page(
             current_modules.append({
                 "module": mod,
                 "homework_submitted": hw_submitted,
-                "can_release": hw_submitted,
+                "can_release": True,  # Always allow release
             })
 
     return templates.TemplateResponse(
@@ -501,23 +484,6 @@ async def swap_module(
 
     if not release_selection:
         raise HTTPException(status_code=400, detail="Module to release not found")
-
-    # Check homework submitted for the module being released
-    homework_submission = (
-        db.query(Submission)
-        .filter(
-            Submission.user_id == user.id,
-            Submission.module_id == release_module_id,
-            Submission.submission_type == "homework",
-        )
-        .first()
-    )
-
-    if not homework_submission:
-        raise HTTPException(
-            status_code=400,
-            detail="Please submit homework feedback for the module you want to release.",
-        )
 
     # Check capacity of new module
     reviewer_count = (

@@ -360,8 +360,8 @@ class TestModuleSwitch:
 class TestModuleRelease:
     """Tests for releasing selected modules."""
 
-    def test_release_requires_homework_submission(self, db_session, reviewer_user, pilot_modules):
-        """Test that releasing a module requires homework submission."""
+    def test_release_succeeds_without_homework(self, db_session, reviewer_user, pilot_modules):
+        """Test that releasing a module succeeds without requiring homework submission."""
         module = pilot_modules[0]
 
         # Select module
@@ -375,7 +375,7 @@ class TestModuleRelease:
         reviewer_user.selected_module_id = module.id
         db_session.commit()
 
-        # Check for homework submission (what endpoint does before release)
+        # No homework submitted
         homework = (
             db_session.query(Submission)
             .filter(
@@ -385,55 +385,9 @@ class TestModuleRelease:
             )
             .first()
         )
-        # No homework yet - release should be blocked
         assert homework is None
 
-    def test_release_succeeds_after_homework_submission(self, db_session, reviewer_user, pilot_modules):
-        """Test that releasing a module succeeds after homework submission."""
-        module = pilot_modules[0]
-
-        # Select module
-        selection = UserModuleSelection(
-            user_id=reviewer_user.id,
-            module_id=module.id,
-            selected_at=datetime.utcnow(),
-            is_active=True,
-        )
-        db_session.add(selection)
-        reviewer_user.selected_module_id = module.id
-
-        # Submit homework feedback
-        homework = Submission(
-            user_id=reviewer_user.id,
-            module_id=module.id,
-            submission_type="homework",
-            github_link="https://github.com/feedback-only",
-            comments="Great module with comprehensive content!",
-            time_spent_minutes=150,
-            feedback_responses={
-                "q_objectives": 8,
-                "q_content": 7,
-                "q_starter_code": 9,
-                "q_difficulty": 6,
-                "q_overall": 8,
-            },
-        )
-        db_session.add(homework)
-        db_session.commit()
-
-        # Now release should be allowed
-        homework_exists = (
-            db_session.query(Submission)
-            .filter(
-                Submission.user_id == reviewer_user.id,
-                Submission.module_id == module.id,
-                Submission.submission_type == "homework",
-            )
-            .first()
-        )
-        assert homework_exists is not None
-
-        # Perform release
+        # Perform release (should work without homework)
         db_session.delete(selection)
         reviewer_user.selected_module_id = None
         reviewer_user.selected_at = None
@@ -1241,8 +1195,8 @@ class TestDashboard:
 class TestModuleSwap:
     """Tests for swapping modules."""
 
-    def test_swap_requires_homework_for_released_module(self, db_session, reviewer_user, pilot_modules):
-        """Test that swapping requires homework for the module being released."""
+    def test_swap_succeeds_without_homework(self, db_session, reviewer_user, pilot_modules):
+        """Test that swapping succeeds without requiring homework submission."""
         # Select two modules
         selection1 = UserModuleSelection(
             user_id=reviewer_user.id,
@@ -1259,7 +1213,7 @@ class TestModuleSwap:
         db_session.add_all([selection1, selection2])
         db_session.commit()
 
-        # Check homework for module being released
+        # No homework submitted
         homework = (
             db_session.query(Submission)
             .filter(
@@ -1269,45 +1223,9 @@ class TestModuleSwap:
             )
             .first()
         )
-        assert homework is None  # No homework, swap should be blocked
+        assert homework is None
 
-    def test_swap_succeeds_with_homework(self, db_session, reviewer_user, pilot_modules):
-        """Test that swapping succeeds after homework submission."""
-        # Select two modules
-        selection1 = UserModuleSelection(
-            user_id=reviewer_user.id,
-            module_id=pilot_modules[0].id,
-            selected_at=datetime.utcnow(),
-            is_active=False,
-        )
-        selection2 = UserModuleSelection(
-            user_id=reviewer_user.id,
-            module_id=pilot_modules[1].id,
-            selected_at=datetime.utcnow(),
-            is_active=True,
-        )
-        db_session.add_all([selection1, selection2])
-
-        # Submit homework for first module
-        homework = Submission(
-            user_id=reviewer_user.id,
-            module_id=pilot_modules[0].id,
-            submission_type="homework",
-            github_link="https://github.com/feedback-only",
-            comments="Complete",
-            time_spent_minutes=100,
-            feedback_responses={
-                "q_objectives": 7,
-                "q_content": 7,
-                "q_starter_code": 7,
-                "q_difficulty": 7,
-                "q_overall": 7,
-            },
-        )
-        db_session.add(homework)
-        db_session.commit()
-
-        # Perform swap: release first, add third
+        # Perform swap without homework: release first, add third
         db_session.delete(selection1)
         db_session.query(UserModuleSelection).filter(
             UserModuleSelection.user_id == reviewer_user.id
@@ -1323,7 +1241,7 @@ class TestModuleSwap:
         reviewer_user.selected_module_id = pilot_modules[2].id
         db_session.commit()
 
-        # Verify swap
+        # Verify swap succeeded
         selections = (
             db_session.query(UserModuleSelection)
             .filter(UserModuleSelection.user_id == reviewer_user.id)
