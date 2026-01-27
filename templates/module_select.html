@@ -7,22 +7,22 @@
     <div class="flex gap-8">
         <!-- Left Sidebar -->
         <div class="w-64 flex-shrink-0">
-            <!-- Legend -->
+            <!-- Status Legend -->
             <div class="bg-white rounded-xl shadow-md border border-slate-100 p-5">
-                <h3 class="font-semibold text-base text-slate-800 mb-4">Module Status</h3>
+                <h3 class="font-semibold text-base text-slate-800 mb-4">Status Guide</h3>
                 <div class="space-y-3">
                     <div class="flex items-center gap-3">
-                        <div class="w-4 h-4 rounded bg-gradient-to-r from-emerald-500 to-emerald-600"></div>
-                        <span class="text-sm text-slate-600">Available for Review</span>
+                        <span class="text-xs font-medium px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-700">Available</span>
+                        <span class="text-sm text-slate-600">Open for review</span>
                     </div>
                     {% if user.role.value == 'admin' %}
                     <div class="flex items-center gap-3">
-                        <div class="w-4 h-4 rounded bg-gradient-to-r from-blue-500 to-blue-600"></div>
-                        <span class="text-sm text-slate-600">Draft</span>
+                        <span class="text-xs font-medium px-2.5 py-1 rounded-full bg-blue-100 text-blue-700">Draft</span>
+                        <span class="text-sm text-slate-600">Not yet released</span>
                     </div>
                     <div class="flex items-center gap-3">
-                        <div class="w-4 h-4 rounded bg-gradient-to-r from-purple-500 to-purple-600"></div>
-                        <span class="text-sm text-slate-600">Active</span>
+                        <span class="text-xs font-medium px-2.5 py-1 rounded-full bg-purple-100 text-purple-700">Active</span>
+                        <span class="text-sm text-slate-600">Live for students</span>
                     </div>
                     {% endif %}
                 </div>
@@ -94,13 +94,14 @@
 
                 <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-5">
                     {% for module in course_data.modules %}
+                    {% set color_idx = loop.index0 % 6 %}
                     <div class="bg-white rounded-xl shadow-md hover:shadow-xl transition-all duration-300 border border-slate-100 overflow-hidden group">
-                        <!-- Status Banner - Green for pilot_review, Blue for draft, Purple for active -->
-                        <div class="h-1.5 {% if module.visibility.value == 'pilot_review' %}bg-gradient-to-r from-emerald-500 to-emerald-600{% elif module.visibility.value == 'draft' %}bg-gradient-to-r from-blue-500 to-blue-600{% elif module.visibility.value == 'active' %}bg-gradient-to-r from-purple-500 to-purple-600{% else %}bg-slate-300{% endif %}"></div>
+                        <!-- Color-coded top banner based on tile index -->
+                        <div class="h-1.5 {% if color_idx == 0 %}bg-gradient-to-r from-emerald-500 to-emerald-600{% elif color_idx == 1 %}bg-gradient-to-r from-blue-500 to-blue-600{% elif color_idx == 2 %}bg-gradient-to-r from-purple-500 to-purple-600{% elif color_idx == 3 %}bg-gradient-to-r from-rose-500 to-rose-600{% elif color_idx == 4 %}bg-gradient-to-r from-amber-500 to-amber-600{% else %}bg-gradient-to-r from-cyan-500 to-cyan-600{% endif %}"></div>
 
                         <div class="p-5">
                             <div class="flex justify-between items-start mb-3">
-                                <span class="text-xs font-semibold px-2 py-1 rounded {% if module.visibility.value == 'pilot_review' %}text-emerald-700 bg-emerald-100{% elif module.visibility.value == 'draft' %}text-blue-600 bg-blue-100{% elif module.visibility.value == 'active' %}text-purple-700 bg-purple-100{% else %}text-blue-600 bg-blue-50{% endif %}">
+                                <span class="text-xs font-semibold px-2 py-1 rounded {% if color_idx == 0 %}text-emerald-700 bg-emerald-100{% elif color_idx == 1 %}text-blue-700 bg-blue-100{% elif color_idx == 2 %}text-purple-700 bg-purple-100{% elif color_idx == 3 %}text-rose-700 bg-rose-100{% elif color_idx == 4 %}text-amber-700 bg-amber-100{% else %}text-cyan-700 bg-cyan-100{% endif %}">
                                     Week {{ module.week_number }}
                                 </span>
                                 {% if module.visibility.value == 'pilot_review' %}
@@ -194,13 +195,14 @@
                 <h2 class="text-xl font-bold text-slate-800 mb-4">Other Modules</h2>
                 <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-5">
                     {% for module in modules_without_course %}
+                    {% set color_idx = loop.index0 % 6 %}
                     <div class="bg-white rounded-xl shadow-md hover:shadow-xl transition-all duration-300 border border-slate-100 overflow-hidden group">
-                        <!-- Status Banner -->
-                        <div class="h-1.5 {% if module.visibility.value == 'pilot_review' %}bg-gradient-to-r from-emerald-500 to-emerald-600{% elif module.visibility.value == 'draft' %}bg-gradient-to-r from-blue-500 to-blue-600{% elif module.visibility.value == 'active' %}bg-gradient-to-r from-purple-500 to-purple-600{% else %}bg-slate-300{% endif %}"></div>
+                        <!-- Color-coded top banner based on tile index -->
+                        <div class="h-1.5 {% if color_idx == 0 %}bg-gradient-to-r from-emerald-500 to-emerald-600{% elif color_idx == 1 %}bg-gradient-to-r from-blue-500 to-blue-600{% elif color_idx == 2 %}bg-gradient-to-r from-purple-500 to-purple-600{% elif color_idx == 3 %}bg-gradient-to-r from-rose-500 to-rose-600{% elif color_idx == 4 %}bg-gradient-to-r from-amber-500 to-amber-600{% else %}bg-gradient-to-r from-cyan-500 to-cyan-600{% endif %}"></div>
 
                         <div class="p-5">
                             <div class="flex justify-between items-start mb-3">
-                                <span class="text-xs font-semibold px-2 py-1 rounded {% if module.visibility.value == 'pilot_review' %}text-emerald-700 bg-emerald-100{% elif module.visibility.value == 'draft' %}text-blue-600 bg-blue-100{% elif module.visibility.value == 'active' %}text-purple-700 bg-purple-100{% else %}text-blue-600 bg-blue-50{% endif %}">
+                                <span class="text-xs font-semibold px-2 py-1 rounded {% if color_idx == 0 %}text-emerald-700 bg-emerald-100{% elif color_idx == 1 %}text-blue-700 bg-blue-100{% elif color_idx == 2 %}text-purple-700 bg-purple-100{% elif color_idx == 3 %}text-rose-700 bg-rose-100{% elif color_idx == 4 %}text-amber-700 bg-amber-100{% else %}text-cyan-700 bg-cyan-100{% endif %}">
                                     Week {{ module.week_number }}
                                 </span>
                                 {% if module.visibility.value == 'pilot_review' %}
