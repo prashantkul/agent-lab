@@ -14,7 +14,7 @@ from app.database import get_db
 from app.dependencies import require_admin
 from app.drive import get_file_metadata
 from app.grading import run_auto_grader, apply_manual_grade
-from app.models import Course, Grade, Module, ModuleVisibility, Notification, Submission, User, UserRole
+from app.models import Course, Grade, Module, ModuleVisibility, Notification, Submission, User, UserModuleSelection, UserRole
 from app.notifications import send_pdf_update_notification
 from app.reminders import send_weekly_reminders
 from app.slack import notify_slack_pdf_updated
@@ -530,6 +530,15 @@ async def edit_module_form(
     if not module:
         raise HTTPException(status_code=404, detail="Module not found")
 
+    # Get reviewers who have selected this module
+    reviewer_selections = (
+        db.query(UserModuleSelection, User)
+        .join(User, UserModuleSelection.user_id == User.id)
+        .filter(UserModuleSelection.module_id == module_id)
+        .order_by(UserModuleSelection.selected_at)
+        .all()
+    )
+
     return templates.TemplateResponse(
         "admin/module_edit.html",
         {
@@ -537,6 +546,7 @@ async def edit_module_form(
             "user": user,
             "module": module,
             "is_new": False,
+            "reviewer_selections": reviewer_selections,
         },
     )
 
@@ -734,6 +744,136 @@ async def generate_module_overview(
     await refresh_module_overview(db, module)
 
     return RedirectResponse(url=f"/admin/modules/{module_id}/edit?overview_generated=1", status_code=303)
+
+
+@router.post("/modules/{module_id}/release-reviewer/{user_id}")
+async def admin_release_reviewer(
+    module_id: int,
+    user_id: int,
+    request: Request,
+    db: Session = Depends(get_db),
+    user: User = Depends(require_admin),
+):
+    """Admin releases a reviewer's module selection."""
+    selection = (
+        db.query(UserModuleSelection)
+        .filter(
+            UserModuleSelection.user_id == user_id,
+            UserModuleSelection.module_id == module_id,
+        )
+        .first()
+    )
+    if not selection:
+        raise HTTPException(status_code=404, detail="Selection not found")
+
+    db.delete(selection)
+
+    # Update legacy field
+    target_user = db.query(User).filter(User.id == user_id).first()
+    if target_user and target_user.selected_module_id == module_id:
+        remaining = (
+            db.query(UserModuleSelection)
+            .filter(UserModuleSelection.user_id == user_id)
+            .first()
+        )
+        if remaining:
+            remaining.is_active = True
+            target_user.selected_module_id = remaining.module_id
+        else:
+            target_user.selected_module_id = None
+            target_user.selected_at = None
+
+    db.commit()
+
+    next_url = request.query_params.get("next", f"/admin/modules/{module_id}/edit")
+    return RedirectResponse(url=f"{next_url}?released=1", status_code=303)
+
+
+# ==================== Reviewer Status ====================
+
+
+@router.get("/reviewers", response_class=HTMLResponse)
+async def reviewer_status(
+    request: Request,
+    db: Session = Depends(get_db),
+    user: User = Depends(require_admin),
+):
+    """Show modules with assigned reviewers and their submission status."""
+    modules = (
+        db.query(Module)
+        .filter(Module.visibility.in_([ModuleVisibility.pilot_review, ModuleVisibility.active]))
+        .order_by(Module.course_id, Module.week_number)
+        .all()
+    )
+
+    module_reviewers = []
+    for module in modules:
+        selections = (
+            db.query(UserModuleSelection, User)
+            .join(User, UserModuleSelection.user_id == User.id)
+            .filter(UserModuleSelection.module_id == module.id)
+            .order_by(UserModuleSelection.selected_at)
+            .all()
+        )
+
+        reviewers = []
+        for selection, reviewer in selections:
+            # Get submission status for this reviewer on this module
+            in_class_sub = (
+                db.query(Submission)
+                .filter(
+                    Submission.user_id == reviewer.id,
+                    Submission.module_id == module.id,
+                    Submission.submission_type == "in_class",
+                )
+                .first()
+            )
+            homework_sub = (
+                db.query(Submission)
+                .filter(
+                    Submission.user_id == reviewer.id,
+                    Submission.module_id == module.id,
+                    Submission.submission_type == "homework",
+                )
+                .first()
+            )
+
+            def get_status(submission):
+                if not submission:
+                    return "not_started"
+                grade = (
+                    db.query(Grade)
+                    .filter(Grade.submission_id == submission.id)
+                    .first()
+                )
+                if grade and grade.status == "completed":
+                    return "graded"
+                if grade and grade.status == "running":
+                    return "grading"
+                if grade and grade.status == "failed":
+                    return "failed"
+                return "submitted"
+
+            reviewers.append({
+                "user": reviewer,
+                "selection": selection,
+                "in_class_status": get_status(in_class_sub),
+                "homework_status": get_status(homework_sub),
+            })
+
+        module_reviewers.append({
+            "module": module,
+            "reviewers": reviewers,
+        })
+
+    return templates.TemplateResponse(
+        "admin/reviewers.html",
+        {
+            "request": request,
+            "user": user,
+            "module_reviewers": module_reviewers,
+        },
+    )
 
 
 # ==================== User Management ====================
